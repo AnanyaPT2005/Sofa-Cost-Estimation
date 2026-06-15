@@ -1,0 +1,13 @@
+image,image_name,no_of_seats,armrests,backrest_height_cm,total_height_cm,width_cm,depth_cm,cover_material,armrest_material,no_of_legs,legs_material,sofa_type
+images\sofa1.jpg,sofa1.jpg,1,2,45,85,110,90,fabric,wood,4,wood,straight
+images\sofa2.jpg,sofa2.jpg,2,2,48,88,165,92,fabric,wood,4,wood,straight
+images\sofa3.jpg,sofa3.jpg,2,2,58,82,180,95,leather,cushion,4,metal,straight
+images\sofa4.jpg,sofa4.jpg,3,2,46,84,220,88,leather,wood,4,wood,straight
+images\sofa5.jpg,sofa5.jpg,3,2,60,90,240,95,fabric,cushion,6,wood,straight
+images\sofa6.jpg,sofa6.jpg,3,2,47,86,210,85,fabric,wood,6,wood,straight
+images\sofa7.jpg,sofa7.jpg,1,2,70,100,85,88,fabric,wood,4,wood,straight
+images\sofa8.jpg,sofa8.jpg,1,2,62,92,95,85,fabric,cushion,4,metal,straight
+images\sofa9.jpg,sofa9.jpg,1,2,60,90,105,95,leather,cushion,4,wood,straight
+images\sofa10.jpg,sofa10.jpg,5,2,50,88,320,170,fabric,cushion,8,metal,L-shape
+images\sofa11.jpg,sofa11.jpg,5,2,52,90,300,180,leather,cushion,8,metal,L-shape
+images\sofa12.jpg,sofa12.jpg,4,2,50,88,260,165,leather,cushion,6,metal,L-shape

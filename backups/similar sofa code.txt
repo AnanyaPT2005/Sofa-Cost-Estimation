@@ -1,0 +1,173 @@
+# import pandas as pd
+# from sklearn.preprocessing import LabelEncoder
+# import numpy as np
+
+# # =========================
+# # LOAD DATASET
+# # =========================
+
+# df = pd.read_csv("data/sofas.csv")
+
+# # =========================
+# # ENCODE CATEGORICAL DATA
+# # =========================
+
+# categorical_columns = [
+#     "cover_material",
+#     "armrest_material",
+#     "legs_material",
+#     "sofa_type"
+# ]
+
+# encoders = {}
+
+# for col in categorical_columns:
+#     le = LabelEncoder()
+#     df[col] = le.fit_transform(df[col].astype(str).str.lower().str.strip())
+#     encoders[col] = le
+
+# # =========================
+# # USER INPUT
+# # =========================
+
+# print("\nENTER SOFA FEATURES\n")
+
+# no_of_seats = int(input("Number of seats: "))
+# armrests = int(input("Number of armrests: "))
+# backrest_height_cm = float(input("Backrest height (cm): "))
+# total_height_cm = float(input("Total height (cm): "))
+# width_cm = float(input("Width (cm): "))
+# depth_cm = float(input("Depth (cm): "))
+
+# cover_material = input("Cover (leather/fabric): ").lower().strip()
+# armrest_material = input("Armrest material (wood/cushion): ").lower().strip()
+
+# no_of_legs = int(input("Number of legs: "))
+# legs_material = input("Legs material: ").lower().strip()
+
+# sofa_type = input("Sofa type: ").lower().strip()
+
+# # =========================
+# # ENCODE USER INPUT
+# # =========================
+
+# cover_encoded = encoders["cover_material"].transform([cover_material])[0]
+
+# armrest_material_encoded = encoders["armrest_material"].transform(
+#     [armrest_material]
+# )[0]
+
+# legs_material_encoded = encoders["legs_material"].transform(
+#     [legs_material]
+# )[0]
+
+# sofa_type_encoded = encoders["sofa_type"].transform(
+#     [sofa_type]
+# )[0]
+
+# # =========================
+# # FEATURE WEIGHTS
+# # =========================
+
+# weights = {
+#     "no_of_seats": 10,
+#     "armrests": 3,
+#     "backrest_height_cm": 2,
+#     "total_height_cm": 2,
+#     "width_cm": 5,
+#     "depth_cm": 5,
+#     "cover_material": 8,
+#     "armrest_material": 4,
+#     "no_of_legs": 1,
+#     "legs_material": 2,
+#     "sofa_type": 7
+# }
+
+# # =========================
+# # FIND BEST MATCH
+# # =========================
+
+# best_score = float("inf")
+# best_match = None
+
+# for _, row in df.iterrows():
+
+#     score = 0
+
+#     # Numeric comparisons
+#     score += weights["no_of_seats"] * abs(row["no_of_seats"] - no_of_seats)
+
+#     score += weights["armrests"] * abs(row["armrests"] - armrests)
+
+#     score += weights["backrest_height_cm"] * abs(
+#         row["backrest_height_cm"] - backrest_height_cm
+#     )
+
+#     score += weights["total_height_cm"] * abs(
+#         row["total_height_cm"] - total_height_cm
+#     )
+
+#     score += weights["width_cm"] * abs(
+#         row["width_cm"] - width_cm
+#     )
+
+#     score += weights["depth_cm"] * abs(
+#         row["depth_cm"] - depth_cm
+#     )
+
+#     score += weights["no_of_legs"] * abs(
+#         row["no_of_legs"] - no_of_legs
+#     )
+
+#     # Categorical comparisons
+#     score += weights["cover_material"] * (
+#         row["cover_material"] != cover_encoded
+#     )
+
+#     score += weights["armrest_material"] * (
+#         row["armrest_material"] != armrest_material_encoded
+#     )
+
+#     score += weights["legs_material"] * (
+#         row["legs_material"] != legs_material_encoded
+#     )
+
+#     score += weights["sofa_type"] * (
+#         row["sofa_type"] != sofa_type_encoded
+#     )
+
+#     # Save best match
+#     if score < best_score:
+#         best_score = score
+#         best_match = row
+
+# # =========================
+# # DECODE OUTPUTS
+# # =========================
+
+# decoded_cover = encoders["cover_material"].inverse_transform(
+#     [int(best_match["cover_material"])]
+# )[0]
+
+# decoded_sofa_type = encoders["sofa_type"].inverse_transform(
+#     [int(best_match["sofa_type"])]
+# )[0]
+
+# # =========================
+# # OUTPUT
+# # =========================
+
+# print("\nMOST SIMILAR SOFA FOUND\n")
+
+# print(f"Image File: {best_match['image']}")
+# print(f"Image Name: {best_match['image_name']}")
+# print(f"Seats: {best_match['no_of_seats']}")
+# print(f"Width: {best_match['width_cm']} cm")
+# print(f"Depth: {best_match['depth_cm']} cm")
+# print(f"Height: {best_match['total_height_cm']} cm")
+# print(f"Cover: {decoded_cover}")
+# print(f"Sofa Type: {decoded_sofa_type}")
+
+# similarity_score = max(0, 100 - best_score)
+
+# print(f"\nSimilarity Score: {similarity_score:.2f}%")
