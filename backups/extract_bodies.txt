@@ -1,0 +1,55 @@
+import adsk.core, adsk.fusion, csv, os
+
+def run(context):
+    app = adsk.core.Application.get()
+    ui = app.userInterface
+
+    try:
+        design = adsk.fusion.Design.cast(app.activeProduct)
+        root = design.rootComponent
+        rows = []
+
+        def process(comp, parent_name="root", folder_name="none"):
+            for body in comp.bRepBodies:
+                bb = body.boundingBox
+                L = round((bb.maxPoint.x - bb.minPoint.x) * 10, 2)
+                W = round((bb.maxPoint.y - bb.minPoint.y) * 10, 2)
+                H = round((bb.maxPoint.z - bb.minPoint.z) * 10, 2)
+                vol = round(body.volume * 1000, 2)
+                app_name = body.appearance.name if body.appearance else "none"
+                rows.append({
+                    "folder": folder_name,
+                    "component": comp.name,
+                    "body": body.name,
+                    "L_mm": L,
+                    "W_mm": W,
+                    "H_mm": H,
+                    "volume_mm3": vol,
+                    "appearance": app_name
+                })
+
+            for occ in comp.occurrences:
+                # use occurrence name as folder if it has children
+                child_comp = occ.component
+                new_folder = occ.name if len(child_comp.occurrences) > 0 or len(child_comp.bRepBodies) > 0 else folder_name
+                process(child_comp, comp.name, new_folder)
+
+        process(root)
+
+        ui.messageBox(f"Found {len(rows)} bodies")
+
+        from collections import Counter
+        counts = Counter(r["body"] for r in rows)
+        for r in rows:
+            r["quantity"] = counts[r["body"]]
+
+        path = os.path.join(os.path.expanduser("~"), "Documents", "sofa_bodies.csv")
+        with open(path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
+
+        ui.messageBox(f"Saved to {path}")
+
+    except Exception as e:
+        ui.messageBox(f"ERROR: {str(e)}")

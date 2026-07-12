@@ -1,0 +1,140 @@
+component,body,L_mm,W_mm,H_mm,volume_mm3,appearance,quantity
+Sofa Internal Structure,Body1,12.0,680.0,790.0,2268720.0,Mahogany - Semigloss,1
+Sofa Internal Structure,Body2,12.0,680.0,790.0,2268720.0,Mahogany - Semigloss,1
+Sofa Internal Structure,Body4,1575.0,25.0,65.0,2559375.0,Oak - Glossy,1
+Sofa Internal Structure,Body5,1575.0,44.86,33.93,1575000.0,Oak - Glossy,1
+Sofa Internal Structure,Body6,1575.0,65.0,25.0,2559375.0,Oak - Glossy,1
+Sofa Internal Structure,Body7,40.0,25.0,500.0,500000.0,Oak - Glossy,1
+Sofa Internal Structure,Body8,40.0,25.0,500.0,500000.0,Oak - Glossy,1
+Sofa Internal Structure,Body9,1575.0,65.0,25.0,2559375.0,Oak - Glossy,1
+Sofa Internal Structure,Body10,25.0,60.0,500.0,585614.34,Oak - Glossy,1
+Sofa Internal Structure,Body11,25.0,60.0,500.0,585614.34,Oak - Glossy,1
+Sofa Internal Structure,Body13,1575.0,25.0,40.0,1575000.0,Oak - Glossy,1
+Sofa Internal Structure,Body14,1575.0,40.0,25.0,1575000.0,Oak - Glossy,1
+Sofa Internal Structure,Body15,65.0,25.0,725.0,1178125.01,Oak - Glossy,1
+Sofa Internal Structure,Body16,40.0,378.73,117.18,384079.12,Oak - Glossy,1
+Sofa Internal Structure,Body17,40.0,378.73,117.18,384079.12,Oak - Glossy,1
+Sofa Internal Structure,Body18,65.0,128.0,25.0,208000.0,Oak - Glossy,1
+Sofa Internal Structure,Body21,25.0,655.0,65.0,1064375.0,Oak - Glossy,1
+Sofa Internal Structure,Body22,40.0,374.76,116.19,380000.0,Oak - Glossy,1
+Sofa Internal Structure,Body23,25.0,65.0,141.57,230051.24,Oak - Glossy,1
+Sofa Internal Structure,Body24,25.0,225.0,65.0,365625.0,Oak - Glossy,1
+Sofa Internal Structure,Body25,25.0,65.0,170.0,276250.01,Oak - Glossy,1
+Sofa Internal Structure,Body26,25.0,225.0,65.0,365625.0,Oak - Glossy,1
+Sofa Internal Structure,Body27,25.0,65.0,170.0,276250.01,Oak - Glossy,1
+Sofa Internal Structure,Body28,65.0,150.0,25.0,243750.0,Oak - Glossy,1
+Sofa Internal Structure,Body29,65.0,150.0,25.0,243750.0,Oak - Glossy,1
+Sofa Internal Structure,Body7 (1),20.0,16.0,22.0,671.23,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body53,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body54,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body55,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body56,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body57,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body58,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body59,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body60,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body61,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body62,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body63,52.0,4.0,529.0,16878.75,Steel - Satin,1
+Sofa Internal Structure,Body67,1572.42,12.92,70.0,165387.69,Steel - Satin,1
+Sofa Internal Structure,Body68,1572.42,12.92,70.0,165387.69,Steel - Satin,1
+Sofa Internal Structure,Body69,1572.42,12.92,70.0,165387.69,Steel - Satin,1
+Sofa Internal Structure,Body70,50.0,412.58,104.32,30171.78,Steel - Satin,1
+Sofa Internal Structure,Body71,50.0,412.54,104.32,31516.22,Steel - Satin,1
+Sofa Internal Structure,Body72,1550.07,49.88,17.59,115925.78,Steel - Satin,1
+Sofa Internal Structure,Body73,1552.62,50.11,18.39,116120.09,Steel - Satin,1
+Sofa Internal Structure,Body74,1550.07,49.88,17.59,115925.78,Steel - Satin,1
+Sofa Internal Structure,Body75,50.0,412.58,104.32,30171.78,Steel - Satin,1
+Sofa Internal Structure,Body76,50.0,412.54,104.32,31516.22,Steel - Satin,1
+Sofa Internal Structure,Body77,50.0,412.58,104.32,30171.78,Steel - Satin,1
+Sofa Internal Structure,Body78,50.0,412.54,104.32,31516.22,Steel - Satin,1
+Sofa Internal Structure,Body79,50.0,412.58,104.32,30171.78,Steel - Satin,1
+Sofa Internal Structure,Body80,50.0,412.54,104.32,31516.22,Steel - Satin,1
+Sofa Internal Structure,Body81,50.0,412.58,104.32,30171.78,Steel - Satin,1
+Sofa Internal Structure,Body82,50.0,412.54,104.32,31516.22,Steel - Satin,1
+Sofa Internal Structure,Body83,50.0,412.58,104.32,30171.78,Steel - Satin,1
+Sofa Internal Structure,Body84,50.0,412.54,104.32,31516.22,Steel - Satin,1
+Sofa Internal Structure,Foam Pink,1600.0,51.16,615.11,49993838.28,Powder Coat (Dark Grey),1
+Sofa Internal Structure,Foam Black,1600.0,51.16,615.11,49993838.28,Powder Coat (Black),1
+Sofa Internal Structure,Body87,1600.0,180.06,25.4,7317689.56,Powder Coat (Black),1
+Sofa Internal Structure,Body88,1600.0,20.5,37.71,44640.51,Fabric (White),1
+Sofa Internal Structure,Body89,1600.0,428.33,186.37,53845512.3,Powder Coat (Blue),1
+Sofa Internal Structure,Body90,1600.0,11.5,64.88,1167132.91,Powder Coat (Dark Grey),1
+Sofa Internal Structure,Body95,1610.0,679.65,159.0,5089847.84,Powder Coat (Yellow),1
+Sofa Internal Structure,Body98,203.0,332.1,12.0,684316.09,Mahogany - Semigloss,1
+Sofa Internal Structure,Body99,166.69,142.78,769.0,3563886.23,Oak - Glossy,1
+Sofa Internal Structure,Body100,203.0,332.1,12.0,684316.09,Mahogany - Semigloss,1
+Sofa Internal Structure,Body102,25.0,45.0,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body103,50.57,48.02,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body104,25.0,65.0,771.0,1252875.0,Oak - Glossy,1
+Sofa Internal Structure,Body105,45.0,25.0,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body106,25.0,45.0,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body107,153.0,25.0,65.0,248625.0,Oak - Glossy,1
+Sofa Internal Structure,Body108,25.0,45.0,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body109,153.0,25.0,65.0,248625.0,Oak - Glossy,1
+Sofa Internal Structure,Body130,179.77,167.16,770.0,9299006.35,Powder Coat (Dark Grey),1
+Sofa Internal Structure,Body132,203.0,332.1,12.0,684316.09,Mahogany - Semigloss,1
+Sofa Internal Structure,Body133,166.69,142.78,769.0,3563886.23,Oak - Glossy,1
+Sofa Internal Structure,Body134,203.0,332.1,12.0,684316.09,Mahogany - Semigloss,1
+Sofa Internal Structure,Body135,25.0,45.0,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body136,50.57,48.02,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body137,25.0,65.0,771.0,1252875.0,Oak - Glossy,1
+Sofa Internal Structure,Body138,45.0,25.0,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body139,25.0,45.0,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body140,153.0,25.0,65.0,248625.0,Oak - Glossy,1
+Sofa Internal Structure,Body141,25.0,45.0,771.0,867375.0,Oak - Glossy,1
+Sofa Internal Structure,Body142,153.0,25.0,65.0,248625.0,Oak - Glossy,1
+Sofa Internal Structure,Body143,179.77,167.16,770.0,9299006.35,Powder Coat (Dark Grey),1
+Sofa Internal Structure,Body146,196.74,201.91,12.0,301798.39,Powder Coat (Dark Grey),1
+Sofa Internal Structure,Body147,196.74,201.91,12.0,301798.39,Powder Coat (Dark Grey),1
+Sofa Internal Structure,Body148,196.74,201.91,12.0,301798.39,Powder Coat (Dark Grey),1
+Sofa Internal Structure,Body149,196.74,201.91,12.0,301798.39,Powder Coat (Dark Grey),1
+Sofa Internal Structure,Body150,38.4,79.22,795.0,619284.5,Powder Coat (Blue),1
+Sofa Internal Structure,Body153,216.0,332.1,821.0,4668008.16,Powder Coat (Yellow),1
+Sofa Internal Structure,Body154,38.4,79.22,795.0,619284.5,Powder Coat (Blue),1
+Sofa Internal Structure,Body155,216.0,332.1,821.0,4668008.16,Powder Coat (Yellow),1
+Sofa Internal Structure,Body7 (1) (2) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (1) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (3),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (1) (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (1) (1) (1) (2),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (2),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1),20.0,1.0,22.0,394.57,Steel - Satin,1
+Sofa Internal Structure,Body7 (1) (2) (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1),20.0,10.49,13.56,276.66,Steel - Satin,1
+Sofa Internal Structure,Body226,2060.8,693.01,837.64,0.0,Fabric (Green),1

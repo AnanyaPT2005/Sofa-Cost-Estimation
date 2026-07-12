@@ -1,0 +1,73 @@
+# import pandas as pd
+
+# # ── CONFIG ──────────────────────────────────────
+# CSV_PATH = "sofa_bodies_labeled.csv"
+# INPUT_LENGTH_MM = 1800  # ← change this to your input
+# REF_LENGTH_MM = 1610    # longest dimension in reference model
+# # ────────────────────────────────────────────────
+
+# df = pd.read_csv(CSV_PATH)
+
+# # keep only external + continuous
+# ext = df[(df["visibility"] == "External") & (df["measurement_type"] == "Continuous")].copy()
+
+# scale = INPUT_LENGTH_MM / REF_LENGTH_MM
+
+# ext["scaled_L"] = (ext["L_mm"] * scale).round(2)
+# ext["scaled_W"] = (ext["W_mm"] * scale).round(2)
+# ext["scaled_H"] = (ext["H_mm"] * scale).round(2)
+# ext["scaled_volume"] = (ext["volume_mm3"] * (scale**3)).round(2)
+
+# print(f"\nScale factor: {scale:.4f}  ({REF_LENGTH_MM}mm → {INPUT_LENGTH_MM}mm)\n")
+# print(f"{'Body':<35} {'Category':<15} {'L':>8} {'W':>8} {'H':>8} {'Vol':>14}")
+# print("-" * 95)
+
+# for _, row in ext.iterrows():
+#     print(f"{row['body']:<35} {row['Category']:<15} "
+#           f"{row['scaled_L']:>8} {row['scaled_W']:>8} {row['scaled_H']:>8} "
+#           f"{row['scaled_volume']:>14}")
+
+# # save output
+# out = ext[["body","Category","scaled_L","scaled_W","scaled_H","scaled_volume"]]
+# out.to_csv("outputs/scaled_external.csv", index=False)
+# print("\nSaved to outputs/scaled_external.csv")
+
+
+
+# raise Exception("THIS FILE IS RUNNING")
+import pandas as pd
+
+print("Step 1: imports done")
+
+CSV_PATH = "data/sofa_bodies_labeled.csv"
+INPUT_LENGTH_MM = 1800
+REF_LENGTH_MM = 1610
+
+print(f"Step 2: loading CSV from {CSV_PATH}")
+df = pd.read_csv(CSV_PATH)
+print(f"Step 3: loaded {len(df)} rows")
+
+ext = df[(df["visibility"] == "External") & (df["measurement_type"] == "Continuous")].copy()
+print(f"Step 4: filtered to {len(ext)} external continuous rows")
+
+scale = INPUT_LENGTH_MM / REF_LENGTH_MM
+print(f"Step 5: scale factor = {scale:.4f}")
+
+ext["scaled_L"] = (ext["L_mm"] * scale).round(2)
+ext["scaled_W"] = (ext["W_mm"] * scale).round(2)
+ext["scaled_H"] = (ext["H_mm"] * scale).round(2)
+ext["scaled_volume"] = (ext["volume_mm3"] * (scale**3)).round(2)
+print("Step 6: scaling done")
+
+print(f"\nScale factor: {scale:.4f}  ({REF_LENGTH_MM}mm → {INPUT_LENGTH_MM}mm)\n")
+print(f"{'Body':<35} {'Category':<15} {'L':>8} {'W':>8} {'H':>8} {'Vol':>14}")
+print("-" * 95)
+
+for _, row in ext.iterrows():
+    print(f"{row['body']:<35} {row['Category']:<15} "
+          f"{row['scaled_L']:>8} {row['scaled_W']:>8} {row['scaled_H']:>8} "
+          f"{row['scaled_volume']:>14}")
+
+out = ext[["body","Category","appearance","scaled_L","scaled_W","scaled_H","scaled_volume"]]
+out.to_csv("outputs/scaled_external.csv", index=False)
+print("\nSaved to outputs/scaled_external.csv")

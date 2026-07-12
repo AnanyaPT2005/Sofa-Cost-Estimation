@@ -1,0 +1,132 @@
+import adsk.core, adsk.fusion, csv, os, traceback
+
+def run(context):
+    app = adsk.core.Application.get()
+    ui = app.userInterface
+
+    try:
+        ui.messageBox("Step 1: Script started")
+
+        CSV_PATH = r"G:\My Drive\sofa cost estimation\outputs\scaled_external.csv"
+
+        if not os.path.exists(CSV_PATH):
+            ui.messageBox(f"CSV not found:\n{CSV_PATH}")
+            return
+
+        # ---------------- Read CSV ----------------
+        rows = []
+        with open(CSV_PATH, newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rows.append(row)
+
+        ui.messageBox(f"Loaded {len(rows)} rows")
+
+        design = adsk.fusion.Design.cast(app.activeProduct)
+        if not design:
+            ui.messageBox("No active Fusion design.")
+            return
+
+        root = design.rootComponent
+
+        # ---------------- Delete existing bodies ----------------
+        ui.messageBox("Deleting existing bodies...")
+
+        while root.bRepBodies.count > 0:
+            root.bRepBodies.item(0).deleteMe()
+
+        ui.messageBox("Existing bodies deleted.")
+
+        def mm(v):
+            return float(v) / 10.0  # Fusion uses cm internally
+
+        spacing = 30      # mm
+        current_x = 0     # mm
+
+        created = 0
+
+        # ---------------- Build Bodies ----------------
+        for row in rows:
+
+            body_name = row["body"]
+
+            L = float(row["scaled_L"])
+            W = float(row["scaled_W"])
+            H = float(row["scaled_H"])
+
+            if L <= 0 or W <= 0 or H <= 0:
+                continue
+
+            ui.messageBox(f"Creating {body_name}")
+
+            # ---------- Sketch ----------
+            sketch = root.sketches.add(root.xYConstructionPlane)
+
+            lines = sketch.sketchCurves.sketchLines
+
+            p1 = adsk.core.Point3D.create(mm(current_x), 0, 0)
+            p2 = adsk.core.Point3D.create(mm(current_x + L), mm(W), 0)
+
+            lines.addTwoPointRectangle(p1, p2)
+
+            profile = sketch.profiles.item(0)
+
+            distance = adsk.core.ValueInput.createByReal(mm(H))
+
+            extrude = root.features.extrudeFeatures.addSimple(
+                profile,
+                distance,
+                adsk.fusion.FeatureOperations.NewBodyFeatureOperation
+            )
+
+            new_body = extrude.bodies.item(0)
+            new_body.name = body_name
+
+            # ---------------- Apply Appearance ----------------
+
+            appearance_name = row.get("appearance", "").strip()
+
+            if appearance_name:
+
+                found = None
+
+                # Check if appearance already exists in this design
+                try:
+                    found = design.appearances.itemByName(appearance_name)
+                except:
+                    found = None
+
+                # If not, copy it from any material library
+                if not found:
+
+                    for lib in app.materialLibraries:
+
+                        try:
+                            lib_app = lib.appearances.itemByName(appearance_name)
+
+                            if lib_app:
+                                found = design.appearances.addByCopy(
+                                    lib_app,
+                                    appearance_name
+                                )
+                                break
+
+                        except:
+                            pass
+
+                # Apply appearance
+                if found:
+                    new_body.appearance = found
+                    ui.messageBox(f"Applied appearance: {appearance_name}")
+                else:
+                    ui.messageBox(f"Appearance NOT FOUND: {appearance_name}")
+
+            created += 1
+
+            # Move next box to the right
+            current_x += L + spacing
+
+        ui.messageBox(f"Finished!\nCreated {created} bodies.")
+
+    except:
+        ui.messageBox(traceback.format_exc())
