@@ -11,11 +11,6 @@ venv/
 models/
 models_cad/
 
-# Generated outputs
-outputs/
-*.pkl
-*.png
-
 # Jupyter
 .ipynb_checkpoints/
 
@@ -28,3 +23,5 @@ Thumbs.db
 
 # 3d models
 sofa 3d models/
+
+backups/old outputs/
