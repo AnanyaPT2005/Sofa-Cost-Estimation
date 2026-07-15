@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import os
 
 class RequestForm:
 
@@ -103,10 +104,22 @@ class RequestForm:
 
         self.root.mainloop()
 
+        requests_folder = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "outputs",
+            "requests"
+        )
+
+        os.makedirs(requests_folder, exist_ok=True)
+
+        count = 1
+        while os.path.exists(os.path.join(requests_folder, f"demo_{count:03d}")):
+            count += 1
+
         return {
-        "request_id": "demo_001",
-        "image_path": self.image_path,
-        "length": self.length,
-        "width": self.width,
-        "height": self.height
+            "request_id": f"demo_{count:03d}",
+            "image_path": self.image_path,
+            "length": self.length,
+            "width": self.width,
+            "height": self.height
         }
