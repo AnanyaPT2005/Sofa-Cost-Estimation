@@ -1,35 +1,42 @@
-
-# Module 3 – External Scaling Rules (Prototype v1)
+# phase 4 A – External Scaling Rules (Prototype v1)
 
 ## Purpose
-Convert the ratios produced by Module 2 into real-world dimensions for the external CAD components using:
-- Module 2 JSON
-- component_dataset.csv
-- sofa_metadata.csv
+
+Convert the ratios produced by Phase 3 into real-world dimensions for the external CAD components using:
+
+- Phase 3 JSON
+- component_dataset.csv (renamed_sofa_component.csv)
+- updated_sofa_metadata.csv (see in data folder)
 - User supplied Overall Length, Depth and Height
 
 Output: scaled_external.json
 
-## Example Module 2 Output
+## Example Phase 3 Output
 
 {
-  "template_version":1,
-  "sofa_type":"Straight",
-  "seat_count":3,
-  "seat_configuration":"Jointed",
-  "components":{
-    "seat":{"bbox":{"width_ratio":0.78,"depth_ratio":0.44,"height_ratio":0.22}},
-    "backrest":{"bbox":{"width_ratio":0.79,"thickness_ratio":0.11,"height_ratio":0.51}},
-    "armrest":{"bbox":{"width_ratio":0.12,"depth_ratio":0.43,"height_ratio":0.61}}
-  },
-  "materials":{
-    "fabric":"Fabric",
-    "armrest_frame":"Wood",
-    "backrest_frame":"Wood",
-    "leg_material":"Unknown"
-  },
-  "leg_count":4
+"template_version":1,
+"sofa_type":"Straight",
+"seat_count":3,
+"seat_configuration":"Jointed",
+"components":{
+"seat":{"bbox":{"width_ratio":0.78,"depth_ratio":0.44,"height_ratio":0.22}},
+"backrest":{"bbox":{"width_ratio":0.79,"thickness_ratio":0.11,"height_ratio":0.51}},
+"armrest":{"bbox":{"width_ratio":0.12,"depth_ratio":0.43,"height_ratio":0.61}}
+},
+"materials":{
+"fabric":"Fabric",
+"armrest_frame":"Wood",
+"backrest_frame":"Wood",
+"leg_material":"Unknown"
+},
+"leg_count":4
 }
+
+## External Components we will be scaling:
+
+- Foam
+- Handle Foam
+- Fabric (later)
 
 ## Rules
 
@@ -38,29 +45,35 @@ Output: scaled_external.json
 3. Never merge bodies using geometry alone.
 4. Create logical component groups using body-name prefixes.
 
+### Logical Component Groups
+
 Seat:
-- seat_top*
-- seat_front*
-- seat_back*
+
+- seat_top\*
+- seat_front\*
+- seat_back\*
 
 Backrest:
-- backrest_front*
-- backrest_top*
-- backrest_back*
+
+- backrest_front\*
+- backrest_top\*
+- backrest_back\*
 
 Right Armrest:
-- right_armrest_top*
-- right_armrest_front*
-- right_armrest_back*
-- right_armrest_base*
+
+- right_armrest_top\*
+- right_armrest_front\*
+- right_armrest_back\*
+- right_armrest_base\*
 
 Left Armrest:
-- left_armrest_top*
-- left_armrest_front*
-- left_armrest_back*
-- left_armrest_base*
 
-('*' includes duplicate bodies such as (1), (2), ...)
+- left_armrest_top\*
+- left_armrest_front\*
+- left_armrest_back\*
+- left_armrest_base\*
+
+('\*' includes duplicate bodies such as (1), (2), ...)
 
 5. Merge duplicate bodies ONLY inside the same logical component.
 
@@ -100,7 +113,23 @@ Scale the seat as one component.
 Separate:
 Each Seat Width = Total Seat Width / Seat Count.
 
-8. Apply the scaled logical dimensions back to EVERY CAD body belonging to that logical group.
+## Rule 8 – Validate Sofa Attributes Before Scaling
+
+Before applying any scaling rules, verify the sofa metadata.
+
+### Seat Configuration
+
+If `Seat_Configuration = Jointed`
+
+- Treat the entire seat as a single continuous component.
+- Ignore the `seat_count` variable during seat scaling.
+- Scale the seat directly using the user-provided Overall Length, Overall Depth and Overall Height together with the ratios obtained from Phase 3.
+
+If `Seat_Configuration = Separate`
+
+- Divide the scaled seat width equally among all seats.
+
+9. Apply the scaled logical dimensions back to EVERY CAD body belonging to that logical group.
 
 Example:
 Seat -> seat_top, seat_front, seat_back
