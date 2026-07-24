@@ -43,4 +43,39 @@
 | Leg_Count               | Number of legs                  |
 | Leg_Material            | Wood / Metal / Plastic          |
 
+Here's a concise documentation table for your **`sofa_metadata.csv`**.
+
+| Attribute                         | Description                                                                    | Derived From                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| **Template_ID**                   | Unique identifier of the sofa template.                                        | Assigned manually.                                                           |
+| **Template_Name**                 | Name of the CAD template.                                                      | CAD model / Fusion project name.                                             |
+| **Sofa_Type**                     | Overall sofa category (Straight, L-shape, U-shape, etc.).                      | Manual classification or image processing.                                   |
+| **Seat_Count**                    | Number of seating positions.                                                   | Manual / Image Processing (Module 2).                                        |
+| **Overall_Length_mm**             | Total sofa length.                                                             | `fabric cover` → **L_mm** (bounding box).                                    |
+| **Overall_Depth_mm** *(or Width)* | Total sofa depth (front to back).                                              | `fabric cover` → **W_mm** (bounding box).                                    |
+| **Overall_Height_mm**             | Maximum height of the sofa.                                                    | `fabric cover` → **H_mm** (bounding box).                                    |
+| **Armrest_Height_mm**             | Height of the armrest (prototype rule).                                        | **max(H_mm of left/right_armrest_top*) + H_mm of left/right_armrest_base**.  |
+| **Backrest_Height_mm**            | Height of the visible backrest front.                                          | `backrest_front` → **H_mm**.                                                 |
+| **Seat_Height_mm**                | Height of the seat surface from the ground.                                    | `seat_top` → **max_y_mm**.                                                   |
+| **Seat_Width_mm**                 | Thickness (vertical section) of the seat top component (prototype definition). | `seat_top` → **W_mm**.                                                       |
+| **Seat_Depth_mm**                 | Front face thickness of the seat (prototype definition).                       | `seat_front` → **H_mm**.                                                     |
+| **Seat_Configuration**            | Indicates whether cushions are Jointed or Separate.                            | Manual.                                                                      |
+| **Armrest_Frame_Material**        | Structural material inside armrest.                                            | Manual / Manufacturer data.                                                  |
+| **Backrest_Frame_Material**       | Structural material inside backrest.                                           | Manual / Manufacturer data.                                                  |
+| **Fabric_Material**               | Upholstery material.                                                           | Manual / Manufacturer data.                                                  |
+| **Leg_Count**                     | Number of legs.                                                                | Manual or CAD count.                                                         |
+| **Leg_Material**                  | Material of sofa legs.                                                         | Manual / Manufacturer data.                                                  |
+| **Notes**                         | Additional comments about the template.                                        | Manual.                                                                      |
+
+### Note on prototype-derived attributes
+
+The following values are **prototype-specific engineering definitions** and are not standard furniture measurements:
+
+* **Armrest_Height_mm** = `max(armrest_top H_mm) + armrest_base H_mm`
+* **Seat_Width_mm** = `seat_top W_mm`
+* **Seat_Depth_mm** = `seat_front H_mm`
+
+These were chosen as consistent rules for your MVP and can be refined later if you decide to use more accurate geometric measurements.
+
+
 ---
