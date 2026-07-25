@@ -60,8 +60,10 @@ def check_scaling(
         # Width
         # ---------------------------------------------------
 
-        expected = old["scaled_W_mm"] * sy if "scaled_W_mm" in old.index else old["W_mm"] * sy
-
+        if body == "seat_top":
+            expected = old["scaled_W_mm"] * sz if "scaled_W_mm" in old.index else old["W_mm"] * sz
+        else:
+            expected = old["scaled_W_mm"] * sy if "scaled_W_mm" in old.index else old["W_mm"] * sy
         actual = (
             new["scaled_W_mm"]
             if "scaled_W_mm" in new.index
@@ -81,7 +83,10 @@ def check_scaling(
         # Height
         # ---------------------------------------------------
 
-        expected = old["scaled_H_mm"] * sz if "scaled_H_mm" in old.index else old["H_mm"] * sz
+        if body == "seat_top":
+            expected = old["scaled_H_mm"] * sy if "scaled_H_mm" in old.index else old["H_mm"] * sy
+        else:
+            expected = old["scaled_H_mm"] * sz if "scaled_H_mm" in old.index else old["H_mm"] * sz
 
         actual = (
             new["scaled_H_mm"]
@@ -101,6 +106,12 @@ def check_scaling(
         # ---------------------------------------------------
         # Bounding X
         # ---------------------------------------------------
+
+        actual = (
+            new["scaled_L_mm"]
+            if "scaled_L_mm" in new.index
+            else new["L_mm"]
+        )
 
         min_x = (
             new["scaled_min_x_mm"]

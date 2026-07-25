@@ -47,7 +47,7 @@ def _compute_scale_factors(
 
     template_length = seat_top["L_mm"]
 
-    template_depth = seat_top["W_mm"]
+    template_depth = seat_top["H_mm"]
 
     # User confirmed this is the logical height
     template_height = seat_front["H_mm"]
@@ -82,9 +82,15 @@ def _scale_body(row, sx, sy, sz):
 
     row = row.copy()
 
-    new_L = row["L_mm"] * sx
-    new_W = row["W_mm"] * sy
-    new_H = row["H_mm"] * sz
+    if row["body"] == "seat_top":
+        new_L = row["L_mm"] * sx      # Length
+        new_W = row["W_mm"] * sz      # Thickness
+        new_H = row["H_mm"] * sy      # Depth
+
+    elif row["body"] == "seat_front":
+        new_L = row["L_mm"] * sx      # Length
+        new_W = row["W_mm"] * sy      # Height
+        new_H = row["H_mm"] * sz      # Thickness
 
     cx = row["center_x_mm"]
     cy = row["center_y_mm"]

@@ -77,13 +77,15 @@ def check_seat_logic(scaled_df):
     # Height
     # --------------------------------------------------
 
-    print(f"\nTop Height     : {top[height_col]:.2f}")
-    print(f"Front Height   : {front[height_col]:.2f}")
+    # seat_top thickness is W
+    # seat_front thickness is H
 
-    if front[height_col] > top[height_col]:
-        print("Height Check   : PASS")
+    print(f"\nTop Thickness   : {top[depth_col]:.2f}")
+    print(f"Front Thickness : {front[height_col]:.2f}")
+
+    if top[depth_col] > front[height_col]:
+        print("Thickness Check : PASS")
     else:
-        print("Height Check   : FAIL")
+        print("Thickness Check : FAIL")
         passed = False
-
     return passed
