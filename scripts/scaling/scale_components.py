@@ -1,5 +1,14 @@
 import json
 import os
+import sys
+
+ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
+)
+
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
 import pandas as pd
 from scripts.verification.check_scaling import check_scaling
 from scripts.verification.armrest_checks import check_armrest_logic
@@ -7,13 +16,17 @@ from scripts.verification.seat_checks import check_seat_logic
 
 from armrest_scaler import (
     scale_armrests,
-    print_scaling_summary
+    print_scaling_summary,
 )
 
 from seat_scaler import (
     scale_seats,
-    print_seat_summary
+    print_seat_summary,
 )
+
+from scripts.verification.check_scaling import check_scaling
+from scripts.verification.armrest_checks import check_armrest_logic
+from scripts.verification.seat_checks import check_seat_logic
 
 
 def get_user_dimensions():
@@ -60,38 +73,63 @@ def main():
         "scaled_sofa_components.csv"
     )
 
-    # -----------------------------
-    # User input
-    # -----------------------------
+    # --------------------------------------------------
+    # User Input
+    # --------------------------------------------------
 
     user_length, user_depth, user_height = get_user_dimensions()
 
-    # -----------------------------
-    # Load files
-    # -----------------------------
+    # --------------------------------------------------
+    # Load Files
+    # --------------------------------------------------
 
     phase3 = load_phase3_json(PHASE3_JSON)
 
     component_df = pd.read_csv(COMPONENT_CSV)
 
-    # -----------------------------
-    # Scale
-    # -----------------------------
+    # --------------------------------------------------
+    # Scale Armrests
+    # --------------------------------------------------
 
-    scaled_df, verification_df, info = scale_armrests(
+    armrest_scaled_df, armrest_verification_df, armrest_info = scale_armrests(
         component_df,
         phase3,
         user_length,
         user_depth,
-        user_height
+        user_height,
     )
 
-    # ------------------------------------
-# Keep only scaled armrest bodies
-# ------------------------------------
-    # -----------------------------
-    # Save scaled armrest CSV
-    # -----------------------------
+    # --------------------------------------------------
+    # Scale Seats
+    # --------------------------------------------------
+
+    scaled_df, seat_verification_df, seat_info = scale_seats(
+        armrest_scaled_df,
+        phase3,
+        user_length,
+        user_depth,
+        user_height,
+    )
+
+    # --------------------------------------------------
+# Save Only Scaled Components
+# --------------------------------------------------
+
+    scaled_bodies = [
+        # Armrests
+        "left_armrest_top",
+        "left_armrest_top (1)",
+        "left_armrest_front",
+        "left_armrest_base",
+        "right_armrest_top",
+        "right_armrest_top (1)",
+        "right_armrest_front",
+        "right_armrest_base",
+
+        # Seats
+        "seat_top",
+        "seat_front",
+    ]
 
     output_columns = [
         "body",
@@ -113,20 +151,8 @@ def main():
         "center_z_mm",
     ]
 
-    armrest_bodies = [
-    "left_armrest_top",
-    "left_armrest_top (1)",
-    "left_armrest_front",
-    "left_armrest_base",
-
-    "right_armrest_top",
-    "right_armrest_top (1)",
-    "right_armrest_front",
-    "right_armrest_base",
-    ]
-
     output_df = (
-        scaled_df[scaled_df["body"].isin(armrest_bodies)][output_columns]
+        scaled_df[scaled_df["body"].isin(scaled_bodies)][output_columns]
         .copy()
     )
 
@@ -148,37 +174,83 @@ def main():
         "center_z_mm": "scaled_center_z_mm",
     }, inplace=True)
 
-    output_csv = os.path.join(
-        OUTPUT_DIR,
-        "scaled_armrest_components.csv"
+    output_df.to_csv(
+        OUTPUT_CSV,
+        index=False,
     )
 
-    output_df.to_csv(output_csv, index=False)
+    # --------------------------------------------------
+    # Verification DataFrames
+    # --------------------------------------------------
+
+    armrest_bodies = [
+        "left_armrest_top",
+        "left_armrest_top (1)",
+        "left_armrest_front",
+        "left_armrest_base",
+        "right_armrest_top",
+        "right_armrest_top (1)",
+        "right_armrest_front",
+        "right_armrest_base",
+    ]
+
+    seat_bodies = [
+        "seat_top",
+        "seat_front",
+    ]
+
+    armrest_df = scaled_df[
+        scaled_df["body"].isin(armrest_bodies)
+    ].copy()
+
+    seat_df = scaled_df[
+        scaled_df["body"].isin(seat_bodies)
+    ].copy()
+
+    # --------------------------------------------------
+    # Verification
+    # --------------------------------------------------
 
     check_scaling(
-    component_df,
-    output_df,
-    info["scale_x"],
-    info["scale_y"],
-    info["scale_z"],
-    logical_check=check_armrest_logic,
-    title="ARMREST SCALING VERIFICATION"
-)
+        component_df,
+        armrest_df,
+        armrest_info["scale_x"],
+        armrest_info["scale_y"],
+        armrest_info["scale_z"],
+        logical_check=check_armrest_logic,
+        title="ARMREST SCALING VERIFICATION",
+    )
 
-    # -----------------------------
-    # Print Results
-    # -----------------------------
+    check_scaling(
+        component_df,
+        seat_df,
+        seat_info["scale_x"],
+        seat_info["scale_y"],
+        seat_info["scale_z"],
+        logical_check=check_seat_logic,
+        title="SEAT SCALING VERIFICATION",
+    )
 
-    print_scaling_summary(info)
+    # --------------------------------------------------
+    # Print Summaries
+    # --------------------------------------------------
+
+    print_scaling_summary(armrest_info)
 
     print("\nScaled Armrest Bodies\n")
-    print(verification_df.to_string(index=False))
+    print(armrest_verification_df.to_string(index=False))
+
+    print_seat_summary(seat_info)
+
+    print("\nScaled Seat Bodies\n")
+    print(seat_verification_df.to_string(index=False))
 
     print("\n")
     print("=" * 60)
     print("Scaled CSV written to:")
-    print(output_csv)
+    print(OUTPUT_CSV)
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

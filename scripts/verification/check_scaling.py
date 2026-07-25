@@ -1,12 +1,8 @@
 import math
-from armrest_checks import check_armrest_logic
 
 TOL = 0.02
-
-
 def approx_equal(a, b, tol=TOL):
     return math.isclose(a, b, abs_tol=tol)
-
 
 def check_scaling(
     original_df,
