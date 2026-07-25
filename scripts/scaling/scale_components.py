@@ -1,7 +1,7 @@
 import json
 import os
 import pandas as pd
-from check_scaling import check_scaling
+from scripts.verification.check_scaling import check_scaling
 
 from armrest_scaler import (
     scale_armrests,
