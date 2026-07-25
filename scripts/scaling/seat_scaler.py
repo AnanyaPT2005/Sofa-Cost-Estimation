@@ -1,415 +1,218 @@
-# ============================================================
-# PHASE 4A - EXTERNAL SCALING
-# Scales seat_top and seat_front
-# Generates:
-#   scaled_external.json
-#   scaled_external.csv
-#   scaled_sofa_metadata.csv
-# ============================================================
-
 import pandas as pd
-import json
 
-# ============================================================
-# USER INPUT
-# ============================================================
 
-print("========== PHASE 4A ==========")
-
-USER_LENGTH = float(input("Enter Overall Length (mm): "))
-USER_DEPTH = float(input("Enter Overall Depth (mm): "))
-USER_HEIGHT = float(input("Enter Overall Height (mm): "))
-
-# ============================================================
-# READ COMPONENT DATASET
-# ============================================================
-
-columns = [
-
-    "Template",
-    "Assembly",
-    "Component",
-
-    "L_mm",
-    "W_mm",
-    "H_mm",
-
-    "Xmin",
-    "Ymin",
-    "Zmin",
-
-    "Xmax",
-    "Ymax",
-    "Zmax",
-
-    "CenterX",
-    "CenterY",
-    "CenterZ",
-
-    "Volume",
-    "Material",
-    "Body_Count",
-    "Measurement_Type",
-    "Visibility"
-
+SEAT_BODIES = [
+    "seat_top",
+    "seat_front",
 ]
 
-components = pd.read_csv(
-    "renamed_sofa_component.csv",
-    header=None,
-    names=columns
-)
 
-# ============================================================
-# CONVERT NUMERIC COLUMNS
-# ============================================================
+def _compute_scale_factors(
+    component_df,
+    phase3,
+    user_length,
+    user_depth,
+    user_height,
+):
+    """
+    Compute seat scale factors.
+    """
 
-numeric_columns = [
+    ratios = phase3["components"]["seat"]["bbox"]
 
-    "L_mm",
-    "W_mm",
-    "H_mm",
+    target_length = ratios["width_ratio"] * user_length
+    target_depth = ratios["depth_ratio"] * user_depth
+    target_height = ratios["height_ratio"] * user_height
 
-    "Xmin",
-    "Ymin",
-    "Zmin",
+    seat_df = component_df[
+        component_df["body"].isin(SEAT_BODIES)
+    ].copy()
 
-    "Xmax",
-    "Ymax",
-    "Zmax",
+    if len(seat_df) != 2:
+        raise ValueError(
+            "seat_top and seat_front must exist in the component CSV."
+        )
 
-    "CenterX",
-    "CenterY",
-    "CenterZ",
+    seat_top = seat_df[
+        seat_df["body"] == "seat_top"
+    ].iloc[0]
 
-    "Volume"
+    seat_front = seat_df[
+        seat_df["body"] == "seat_front"
+    ].iloc[0]
 
-]
+    # ------------------------------------
+    # Logical template dimensions
+    # ------------------------------------
 
-for col in numeric_columns:
+    template_length = seat_top["L_mm"]
 
-    components[col] = pd.to_numeric(
-        components[col],
-        errors="coerce"
+    template_depth = seat_top["W_mm"]
+
+    # User confirmed this is the logical height
+    template_height = seat_front["H_mm"]
+
+    scale_x = target_length / template_length
+    scale_y = target_depth / template_depth
+    scale_z = target_height / template_height
+
+    info = {
+
+        "template_length": template_length,
+        "template_depth": template_depth,
+        "template_height": template_height,
+
+        "target_length": target_length,
+        "target_depth": target_depth,
+        "target_height": target_height,
+
+        "scale_x": scale_x,
+        "scale_y": scale_y,
+        "scale_z": scale_z,
+    }
+
+    return scale_x, scale_y, scale_z, info
+
+
+def _scale_body(row, sx, sy, sz):
+    """
+    Scale one seat body while keeping its centre fixed.
+    Coordinate logic is identical to armrest_scaler.py
+    """
+
+    row = row.copy()
+
+    new_L = row["L_mm"] * sx
+    new_W = row["W_mm"] * sy
+    new_H = row["H_mm"] * sz
+
+    cx = row["center_x_mm"]
+    cy = row["center_y_mm"]
+    cz = row["center_z_mm"]
+
+    row["L_mm"] = round(new_L, 2)
+    row["W_mm"] = round(new_W, 2)
+    row["H_mm"] = round(new_H, 2)
+
+    row["min_x_mm"] = round(cx - new_L / 2, 2)
+    row["max_x_mm"] = round(cx + new_L / 2, 2)
+
+    row["min_y_mm"] = round(cy - new_W / 2, 2)
+    row["max_y_mm"] = round(cy + new_W / 2, 2)
+
+    row["min_z_mm"] = round(cz - new_H / 2, 2)
+    row["max_z_mm"] = round(cz + new_H / 2, 2)
+
+    return row
+
+def scale_seats(
+    component_df,
+    phase3,
+    user_length,
+    user_depth,
+    user_height,
+):
+    """
+    Scale seat bodies.
+
+    Returns
+    -------
+    scaled_df
+    verification_df
+    info
+    """
+
+    sx, sy, sz, info = _compute_scale_factors(
+        component_df,
+        phase3,
+        user_length,
+        user_depth,
+        user_height,
     )
 
-# ============================================================
-# READ METADATA
-# ============================================================
+    scaled_df = component_df.copy()
 
-metadata = pd.read_csv(
-    "updated_sofa_metadat.csv"
-)
+    verification_rows = []
 
-# ============================================================
-# READ PHASE3 JSON
-# ============================================================
+    for idx, row in scaled_df.iterrows():
 
-with open("phase3.json", "r") as f:
+        if row["body"] not in SEAT_BODIES:
+            continue
 
-    phase3 = json.load(f)
+        old = row.copy()
 
-# ============================================================
-# VALIDATION
-# ============================================================
+        new = _scale_body(
+            row,
+            sx,
+            sy,
+            sz,
+        )
 
-print("\nChecking Template...")
+        scaled_df.loc[idx] = new
 
-if phase3["sofa_type"] != "Straight":
+        verification_rows.append({
 
-    raise Exception("Unsupported Sofa Type")
+            "Body": row["body"],
 
-if phase3["seat_configuration"] != "Jointed":
+            "Old L": round(old["L_mm"], 2),
+            "New L": round(new["L_mm"], 2),
 
-    raise Exception("Only Jointed Seat Configuration Supported")
+            "Old W": round(old["W_mm"], 2),
+            "New W": round(new["W_mm"], 2),
 
-external = components[
-    components["Visibility"].str.lower() == "external"
-]
+            "Old H": round(old["H_mm"], 2),
+            "New H": round(new["H_mm"], 2),
+        })
 
-if len(external) == 0:
-
-    raise Exception("No External Components Found")
-
-print("Template Validated Successfully")
-
-# ============================================================
-# EXTRACT SEAT RATIOS
-# ============================================================
-
-seat_ratio = phase3["components"]["seat"]["bbox"]
-
-seat_width_ratio = seat_ratio["width_ratio"]
-seat_depth_ratio = seat_ratio["depth_ratio"]
-seat_height_ratio = seat_ratio["height_ratio"]
-
-# ============================================================
-# TARGET DIMENSIONS
-# ============================================================
-
-target_length = seat_width_ratio * USER_LENGTH
-target_depth = seat_depth_ratio * USER_DEPTH
-target_height = seat_height_ratio * USER_HEIGHT
-
-print("\nTarget Seat Dimensions")
-
-print("Length :", round(target_length,2))
-print("Depth  :", round(target_depth,2))
-print("Height :", round(target_height,2))
-
-# ============================================================
-# SELECT ONLY SEAT COMPONENTS
-# ============================================================
-
-seat_components = external[
-    external["Component"].isin([
-        "seat_top",
-        "seat_front"
-    ])
-].copy()
-
-if len(seat_components) == 0:
-
-    raise Exception("seat_top / seat_front not found")
-
-# ============================================================
-# MERGE TEMPLATE DIMENSIONS
-# ============================================================
-
-template_length = seat_components["L_mm"].sum()
-
-template_depth = seat_components["W_mm"].max()
-
-template_height = seat_components["H_mm"].max()
-
-print("\nTemplate Dimensions")
-
-print("Length :", template_length)
-print("Depth  :", template_depth)
-print("Height :", template_height)
-
-# ============================================================
-# SCALE FACTORS
-# ============================================================
-
-scale_x = target_length / template_length
-
-scale_y = target_depth / template_depth
-
-scale_z = target_height / template_height
-
-print("\nScale Factors")
-
-print("ScaleX =", round(scale_x,6))
-print("ScaleY =", round(scale_y,6))
-print("ScaleZ =", round(scale_z,6))
-
-# ============================================================
-# OUTPUT LIST
-# ============================================================
-
-scaled_output = []
-# ============================================================
-# SCALE seat_top AND seat_front
-# ============================================================
-
-for _, row in seat_components.iterrows():
-
-    body = {}
-
-    body["Component"] = row["Component"]
-
-    body["Original_Dimensions"] = {
-
-        "Length_mm": round(row["L_mm"],2),
-        "Width_mm": round(row["W_mm"],2),
-        "Height_mm": round(row["H_mm"],2)
-
-    }
-
-    body["Scale_Factors"] = {
-
-        "ScaleX": round(scale_x,6),
-        "ScaleY": round(scale_y,6),
-        "ScaleZ": round(scale_z,6)
-
-    }
-
-    # ==========================================
-    # Scaled Dimensions
-    # ==========================================
-
-    scaled_length = row["L_mm"] * scale_x
-    scaled_width = row["W_mm"] * scale_y
-    scaled_height = row["H_mm"] * scale_z
-
-    body["Scaled_Dimensions"] = {
-
-        "Length_mm": round(scaled_length,2),
-        "Width_mm": round(scaled_width,2),
-        "Height_mm": round(scaled_height,2)
-
-    }
-
-    # ==========================================
-    # Scale Bounding Box Coordinates
-    # ==========================================
-
-    coordinates = {
-
-        "Xmin": round(row["Xmin"] * scale_x,2),
-        "Ymin": round(row["Ymin"] * scale_y,2),
-        "Zmin": round(row["Zmin"] * scale_z,2),
-
-        "Xmax": round(row["Xmax"] * scale_x,2),
-        "Ymax": round(row["Ymax"] * scale_y,2),
-        "Zmax": round(row["Zmax"] * scale_z,2)
-
-    }
-
-    body["Scaled_Coordinates"] = coordinates
-
-    # ==========================================
-    # Scale Center Coordinates
-    # ==========================================
-
-    center = {
-
-        "CenterX": round(row["CenterX"] * scale_x,2),
-        "CenterY": round(row["CenterY"] * scale_y,2),
-        "CenterZ": round(row["CenterZ"] * scale_z,2)
-
-    }
-
-    body["Scaled_Center"] = center
-
-    scaled_output.append(body)
-
-# ============================================================
-# SAVE JSON
-# ============================================================
-
-with open("scaled_external.json","w") as f:
-
-    json.dump(
-        scaled_output,
-        f,
-        indent=4
+    verification_df = pd.DataFrame(
+        verification_rows
     )
 
-print("\nscaled_external.json Created")
+    return (
+        scaled_df,
+        verification_df,
+        info,
+    )
 
-# ============================================================
-# CREATE CSV OUTPUT
-# ============================================================
 
-csv_rows = []
+def print_seat_summary(info):
 
-for item in scaled_output:
+    print("\n")
+    print("=" * 60)
+    print("SEAT SCALING SUMMARY")
+    print("=" * 60)
 
-    row = {
-
-        "Component": item["Component"],
-
-        "ScaleX": item["Scale_Factors"]["ScaleX"],
-        "ScaleY": item["Scale_Factors"]["ScaleY"],
-        "ScaleZ": item["Scale_Factors"]["ScaleZ"],
-
-        "Length_mm": item["Scaled_Dimensions"]["Length_mm"],
-        "Width_mm": item["Scaled_Dimensions"]["Width_mm"],
-        "Height_mm": item["Scaled_Dimensions"]["Height_mm"],
-
-        "Xmin": item["Scaled_Coordinates"]["Xmin"],
-        "Ymin": item["Scaled_Coordinates"]["Ymin"],
-        "Zmin": item["Scaled_Coordinates"]["Zmin"],
-
-        "Xmax": item["Scaled_Coordinates"]["Xmax"],
-        "Ymax": item["Scaled_Coordinates"]["Ymax"],
-        "Zmax": item["Scaled_Coordinates"]["Zmax"],
-
-        "CenterX": item["Scaled_Center"]["CenterX"],
-        "CenterY": item["Scaled_Center"]["CenterY"],
-        "CenterZ": item["Scaled_Center"]["CenterZ"]
-
-    }
-
-    csv_rows.append(row)
-
-scaled_csv = pd.DataFrame(csv_rows)
-
-scaled_csv.to_csv(
-
-    "scaled_external.csv",
-
-    index=False
-
-)
-
-print("scaled_external.csv Created")
-# ============================================================
-# UPDATE SOFA METADATA
-# ============================================================
-
-metadata.loc[0, "Overall_Length_mm"] = USER_LENGTH
-metadata.loc[0, "Overall_Depth_mm"] = USER_DEPTH
-metadata.loc[0, "Overall_Height_mm"] = USER_HEIGHT
-
-# Optional: Update calculated seat dimensions
-metadata.loc[0, "Seat_Width_mm"] = round(target_length, 2)
-metadata.loc[0, "Seat_Depth_mm"] = round(target_depth, 2)
-metadata.loc[0, "Seat_Height_mm"] = round(target_height, 2)
-
-metadata.to_csv(
-    "scaled_sofa_metadata.csv",
-    index=False
-)
-
-print("scaled_sofa_metadata.csv Created")
-
-# ============================================================
-# DISPLAY RESULTS
-# ============================================================
-
-print("\n========================================")
-print("PHASE 4A COMPLETED SUCCESSFULLY")
-print("========================================")
-
-print("\nUser Dimensions")
-print("-------------------------")
-print(f"Overall Length : {USER_LENGTH:.2f} mm")
-print(f"Overall Depth  : {USER_DEPTH:.2f} mm")
-print(f"Overall Height : {USER_HEIGHT:.2f} mm")
-
-print("\nSeat Target Dimensions")
-print("-------------------------")
-print(f"Length : {target_length:.2f} mm")
-print(f"Depth  : {target_depth:.2f} mm")
-print(f"Height : {target_height:.2f} mm")
-
-print("\nScale Factors")
-print("-------------------------")
-print(f"Scale X : {scale_x:.6f}")
-print(f"Scale Y : {scale_y:.6f}")
-print(f"Scale Z : {scale_z:.6f}")
-
-print("\nScaled Components")
-print("-------------------------")
-
-for item in scaled_output:
-
-    print(f"\nComponent : {item['Component']}")
-
+    print("\nTemplate Logical Dimensions")
     print(
-        "Scaled Size : "
-        f"{item['Scaled_Dimensions']['Length_mm']} x "
-        f"{item['Scaled_Dimensions']['Width_mm']} x "
-        f"{item['Scaled_Dimensions']['Height_mm']} mm"
+        f"Length : {info['template_length']:.2f} mm"
+    )
+    print(
+        f"Depth  : {info['template_depth']:.2f} mm"
+    )
+    print(
+        f"Height : {info['template_height']:.2f} mm"
     )
 
-print("\nGenerated Files")
-print("-------------------------")
-print("✓ scaled_external.json")
-print("✓ scaled_external.csv")
-print("✓ scaled_sofa_metadata.csv")
+    print("\nTarget Dimensions")
+    print(
+        f"Length : {info['target_length']:.2f} mm"
+    )
+    print(
+        f"Depth  : {info['target_depth']:.2f} mm"
+    )
+    print(
+        f"Height : {info['target_height']:.2f} mm"
+    )
 
-print("\nDone.")
+    print("\nScale Factors")
+    print(
+        f"Scale X : {info['scale_x']:.4f}"
+    )
+    print(
+        f"Scale Y : {info['scale_y']:.4f}"
+    )
+    print(
+        f"Scale Z : {info['scale_z']:.4f}"
+    )
+
+    print("=" * 60)

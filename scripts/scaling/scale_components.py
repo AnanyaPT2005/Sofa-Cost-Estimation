@@ -2,10 +2,17 @@ import json
 import os
 import pandas as pd
 from scripts.verification.check_scaling import check_scaling
+from scripts.verification.armrest_checks import check_armrest_logic
+from scripts.verification.seat_checks import check_seat_logic
 
 from armrest_scaler import (
     scale_armrests,
     print_scaling_summary
+)
+
+from seat_scaler import (
+    scale_seats,
+    print_seat_summary
 )
 
 
@@ -153,8 +160,10 @@ def main():
     output_df,
     info["scale_x"],
     info["scale_y"],
-    info["scale_z"]
-    )
+    info["scale_z"],
+    logical_check=check_armrest_logic,
+    title="ARMREST SCALING VERIFICATION"
+)
 
     # -----------------------------
     # Print Results
