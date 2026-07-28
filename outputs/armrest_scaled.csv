@@ -1,0 +1,5 @@
+folder,component,body,L_mm,W_mm,H_mm,min_x_mm,min_y_mm,min_z_mm,max_x_mm,max_y_mm,max_z_mm,center_x_mm,center_y_mm,center_z_mm,volume_mm3,appearance,quantity,Measurement Type,Visibility
+none,Sofa Internal Structure ver 2,right_armrest_front,288.0,900.0,12.0,761.03,-114.04,383.0,1049.03,785.96,395.0,905.03,335.96,389.0,301798.39,Powder Coat (Dark Grey),1,Continuous,External
+none,Sofa Internal Structure ver 2,left_armrest_front,288.0,900.0,12.0,-1049.03,-114.04,383.0,-761.03,785.96,395.0,-905.03,335.96,389.0,301798.39,Powder Coat (Dark Grey),1,Continuous,External
+none,Sofa Internal Structure ver 2,right_armrest_base,288.0,900.0,821.0,777.4,-283.96,-413.0,1065.4,616.04,408.0,921.4,166.04,-2.5,4668008.16,Powder Coat (Yellow),1,Continuous,External
+none,Sofa Internal Structure ver 2,left_armrest_base,288.0,900.0,821.0,-1065.4,-283.96,-413.0,-777.4,616.04,408.0,-921.4,166.04,-2.5,4668008.16,Powder Coat (Yellow),1,Continuous,External

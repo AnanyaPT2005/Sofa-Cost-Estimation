@@ -1,0 +1,7 @@
+body,scaled_L_mm,scaled_W_mm,scaled_H_mm,scaled_min_x_mm,scaled_min_y_mm,scaled_min_z_mm,scaled_max_x_mm,scaled_max_y_mm,scaled_max_z_mm,scaled_center_x_mm,scaled_center_y_mm,scaled_center_z_mm
+backrest_front,1628.0320000000004,428.33,573.98,-800.0,263.31,-323.55,800.0,691.64,-137.18,0.0,477.47,-230.36
+backrest_back,1628.0320000000002,679.65,837.64,-805.0,-0.01,-400.0,805.0,679.64,-241.0,0.0,339.81,-320.5
+right_armrest_front,,,,,,,,,,,,
+left_armrest_front,,,,,,,,,,,,
+right_armrest_base,,,,,,,,,,,,
+left_armrest_base,,,,,,,,,,,,

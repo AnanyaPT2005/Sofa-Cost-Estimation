@@ -91,9 +91,12 @@ def main():
     # Scale Armrests
     # --------------------------------------------------
 
-    armrest_scaled_df, armrest_verification_df, armrest_info = scale_armrests(
+    sofa_metadata_df = pd.read_csv("csv/sofa_metadata.csv")
+
+    armrest_scaled_df, armrest_info = scale_armrests(
         component_df,
         phase3,
+        sofa_metadata_df,
         user_length,
         user_depth,
         user_height,
