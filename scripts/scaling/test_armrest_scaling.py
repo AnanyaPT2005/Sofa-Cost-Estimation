@@ -169,6 +169,10 @@ import pandas as pd
 from armrest_scaler import scale_armrests
 from backrest_scaler import scale_backrest
 
+from seat_scaler import (
+    scale_seats,
+    print_seat_summary,
+)
 
 def main():
 
@@ -241,7 +245,17 @@ def main():
         phase3,
         sofa_metadata_df,
     )
+    # ---------------------------------------------------------
+    # Seat Scaling
+    # ---------------------------------------------------------
 
+    scaled_df, seat_info = scale_seats(
+    scaled_df,
+    phase3,
+    sofa_metadata_df,
+    )
+
+    print_seat_summary(seat_info)
     # ----------------------------------
     # Save only scaled bodies
     # ----------------------------------
@@ -253,6 +267,8 @@ def main():
         "right_armrest_front",
         "backrest_front",
         "backrest_back",
+        "seat_top",
+        "seat_front",
     ]
 
     columns = [
@@ -346,6 +362,6 @@ def main():
         print(f"  Length : {row['scaled_L_mm']:.2f} mm")
         print(f"  Depth  : {row['scaled_W_mm']:.2f} mm")
         print(f"  Height : {row['scaled_H_mm']:.2f} mm")
-        
+
 if __name__ == "__main__":
     main()
