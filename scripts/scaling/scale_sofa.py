@@ -236,6 +236,22 @@ def main():
         user_height,
     )
 
+    print("\nAFTER ARMREST SCALING")
+
+    for body in [
+        "left_armrest_base",
+        "left_armrest_front",
+        "right_armrest_base",
+        "right_armrest_front",
+    ]:
+        row = scaled_df[scaled_df["body"] == body].iloc[0]
+        print(
+            body,
+            row["scaled_L_mm"],
+            row["scaled_W_mm"],
+            row["scaled_H_mm"],
+        )
+
     # ----------------------------------
     # Backrest Scaling
     # ----------------------------------
@@ -253,6 +269,9 @@ def main():
     scaled_df,
     phase3,
     sofa_metadata_df,
+    user_length,
+    user_depth,
+    user_height,
     )
 
     print_seat_summary(seat_info)

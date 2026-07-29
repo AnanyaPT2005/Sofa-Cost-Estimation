@@ -406,26 +406,12 @@ def scale_seats(
     component_df,
     phase3,
     sofa_metadata_df,
+    user_length,
+    user_depth,
+    user_height,
 ):
-    """
-    Scale seat bodies.
-
-    Returns
-    -------
-    scaled_df
-    info
-    """
-
-    user_length = float(
-        sofa_metadata_df.iloc[0]["Overall_Length_mm"]
-    )
-
-    user_depth = float(
-        sofa_metadata_df.iloc[0]["Overall_Depth_mm"]
-    )
-
     seat_height = float(
-        sofa_metadata_df.iloc[0]["Seat_Height_mm"]
+    sofa_metadata_df.iloc[0]["Seat_Height_mm"]
     )
 
     info = _compute_scale_factors(
