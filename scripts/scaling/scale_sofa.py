@@ -168,11 +168,7 @@ import pandas as pd
 
 from armrest_scaler import scale_armrests
 from backrest_scaler import scale_backrest
-
-from seat_scaler import (
-    scale_seats,
-    print_seat_summary,
-)
+from seat_scaler import scale_seats
 
 def main():
 
@@ -236,21 +232,23 @@ def main():
         user_height,
     )
 
-    print("\nAFTER ARMREST SCALING")
+    
 
-    for body in [
-        "left_armrest_base",
-        "left_armrest_front",
-        "right_armrest_base",
-        "right_armrest_front",
-    ]:
-        row = scaled_df[scaled_df["body"] == body].iloc[0]
-        print(
-            body,
-            row["scaled_L_mm"],
-            row["scaled_W_mm"],
-            row["scaled_H_mm"],
-        )
+    # print("\nAFTER ARMREST SCALING")
+
+    # for body in [
+    #     "left_armrest_base",
+    #     "left_armrest_front",
+    #     "right_armrest_base",
+    #     "right_armrest_front",
+    # ]:
+    #     row = scaled_df[scaled_df["body"] == body].iloc[0]
+    #     print(
+    #         body,
+    #         row["scaled_L_mm"],
+    #         row["scaled_W_mm"],
+    #         row["scaled_H_mm"],
+    #     )
 
     # ----------------------------------
     # Backrest Scaling
@@ -274,7 +272,7 @@ def main():
     user_height,
     )
 
-    print_seat_summary(seat_info)
+    # print_seat_summary(seat_info)
     # ----------------------------------
     # Save only scaled bodies
     # ----------------------------------
@@ -313,67 +311,152 @@ def main():
 
     output_df.to_csv(OUTPUT_CSV, index=False)
 
-    # ----------------------------------
-    # Armrest Summary
-    # ----------------------------------
+    # ---------------------------------------------------------
+    # Print Scaling Summaries
+    # ---------------------------------------------------------
 
-    print("\n========== ARMREST ==========")
+    print_scaling_summary(
+        "ARMREST",
+        armrest_info,
+        scaled_df,
+        [
+            "left_armrest_base",
+            "left_armrest_front",
+            "right_armrest_base",
+            "right_armrest_front",
+        ],
+    )
 
-    print(f"Template Length : {armrest_info['template_length']:.2f} mm")
-    print(f"Template Depth  : {armrest_info['template_depth']:.2f} mm")
-    print(f"Template Height : {armrest_info['template_height']:.2f} mm")
+    print_scaling_summary(
+        "BACKREST",
+        backrest_info,
+        scaled_df,
+        [
+            "backrest_front",
+            "backrest_back",
+        ],
+    )
 
-    print()
+    print_scaling_summary(
+        "SEAT",
+        seat_info,
+        scaled_df,
+        [
+            "seat_top",
+            "seat_front",
+        ],
+    )
 
-    print(f"Target Length   : {armrest_info['target_length']:.2f} mm")
-    print(f"Target Depth    : {armrest_info['target_depth']:.2f} mm")
-    print(f"Target Height   : {armrest_info['target_height']:.2f} mm")
+    print(f"\nScaled CSV saved to:\n{OUTPUT_CSV}")
 
-    print()
 
-    print(f"Scale X : {armrest_info['scale_x']:.4f}")
-    print(f"Scale Y : {armrest_info['scale_y']:.4f}")
-    print(f"Scale Z : {armrest_info['scale_z']:.4f}")
+#     # ----------------------------------
+#     # Armrest Summary
+#     # ----------------------------------
 
-    # ----------------------------------
-# Backrest Summary
-# ----------------------------------
+#     print("\n========== ARMREST ==========")
 
-    print("\n========== BACKREST ==========")
+#     print(f"Template Length : {armrest_info['template_length']:.2f} mm")
+#     print(f"Template Depth  : {armrest_info['template_depth']:.2f} mm")
+#     print(f"Template Height : {armrest_info['template_height']:.2f} mm")
 
-    print(f"Template Length : {backrest_info['template_length']:.2f} mm")
-    print(f"Template Depth  : {backrest_info['template_depth']:.2f} mm")
-    print(f"Template Height : {backrest_info['template_height']:.2f} mm")
+#     print()
 
-    print()
+#     print(f"Target Length   : {armrest_info['target_length']:.2f} mm")
+#     print(f"Target Depth    : {armrest_info['target_depth']:.2f} mm")
+#     print(f"Target Height   : {armrest_info['target_height']:.2f} mm")
 
-    print(f"Target Length   : {backrest_info['target_length']:.2f} mm")
-    print(f"Target Depth    : {backrest_info['target_depth']:.2f} mm")
-    print(f"Target Height   : {backrest_info['target_height']:.2f} mm")
+#     print()
 
-    print()
+#     print(f"Scale X : {armrest_info['scale_x']:.4f}")
+#     print(f"Scale Y : {armrest_info['scale_y']:.4f}")
+#     print(f"Scale Z : {armrest_info['scale_z']:.4f}")
 
-    print(f"Scale X : {backrest_info['scale_x']:.4f}")
-    print(f"Scale Y : {backrest_info['scale_y']:.4f}")
-    print(f"Scale Z : {backrest_info['scale_z']:.4f}")
-    print(f"\nScaled CSV saved to: {OUTPUT_CSV}")
+#     # ----------------------------------
+# # Backrest Summary
+# # ----------------------------------
 
-    # ----------------------------------
-    # Scaled Body Dimensions
-    # ----------------------------------
+#     print("\n========== BACKREST ==========")
 
-    print("\n========== SCALED BODY DIMENSIONS ==========")
+#     print(f"Template Length : {backrest_info['template_length']:.2f} mm")
+#     print(f"Template Depth  : {backrest_info['template_depth']:.2f} mm")
+#     print(f"Template Height : {backrest_info['template_height']:.2f} mm")
 
-    scaled_bodies = [
-        "left_armrest_base",
-        "left_armrest_front",
-        "right_armrest_base",
-        "right_armrest_front",
-        "backrest_front",
-        "backrest_back",
-    ]
+#     print()
 
-    for body in scaled_bodies:
+#     print(f"Target Length   : {backrest_info['target_length']:.2f} mm")
+#     print(f"Target Depth    : {backrest_info['target_depth']:.2f} mm")
+#     print(f"Target Height   : {backrest_info['target_height']:.2f} mm")
+
+#     print()
+
+#     print(f"Scale X : {backrest_info['scale_x']:.4f}")
+#     print(f"Scale Y : {backrest_info['scale_y']:.4f}")
+#     print(f"Scale Z : {backrest_info['scale_z']:.4f}")
+#     print(f"\nScaled CSV saved to: {OUTPUT_CSV}")
+
+#     # ----------------------------------
+#     # Scaled Body Dimensions
+#     # ----------------------------------
+
+#     print("\n========== SCALED BODY DIMENSIONS ==========")
+
+#     scaled_bodies = [
+#         "left_armrest_base",
+#         "left_armrest_front",
+#         "right_armrest_base",
+#         "right_armrest_front",
+#         "backrest_front",
+#         "backrest_back",
+#     ]
+
+#     for body in scaled_bodies:
+
+#         row = scaled_df[scaled_df["body"] == body].iloc[0]
+
+#         print(f"\n{body}")
+#         print(f"  Length : {row['scaled_L_mm']:.2f} mm")
+#         print(f"  Depth  : {row['scaled_W_mm']:.2f} mm")
+#         print(f"  Height : {row['scaled_H_mm']:.2f} mm")
+
+
+
+# ---------------------------------------------------------
+# Print Scaling Summary 
+# ---------------------------------------------------------
+
+def print_scaling_summary(
+    title,
+    info,
+    scaled_df,
+    bodies,
+):
+    print("\n")
+    print("=" * 60)
+    print(f"{title} SCALING SUMMARY")
+    print("=" * 60)
+
+    print("\nTemplate Dimensions")
+
+    print(f"Length : {info['template_length']:.2f} mm")
+    print(f"Depth  : {info['template_depth']:.2f} mm")
+    print(f"Height : {info['template_height']:.2f} mm")
+
+    print("\nTarget Dimensions")
+
+    print(f"Length : {info['target_length']:.2f} mm")
+    print(f"Depth  : {info['target_depth']:.2f} mm")
+    print(f"Height : {info['target_height']:.2f} mm")
+
+    print("\nScale Factors")
+
+    print(f"Scale X : {info['scale_x']:.4f}")
+    print(f"Scale Y : {info['scale_y']:.4f}")
+    print(f"Scale Z : {info['scale_z']:.4f}")
+
+    print("\nScaled Body Dimensions")
+
+    for body in bodies:
 
         row = scaled_df[scaled_df["body"] == body].iloc[0]
 
@@ -381,6 +464,9 @@ def main():
         print(f"  Length : {row['scaled_L_mm']:.2f} mm")
         print(f"  Depth  : {row['scaled_W_mm']:.2f} mm")
         print(f"  Height : {row['scaled_H_mm']:.2f} mm")
+
+    print("=" * 60)
+
 
 if __name__ == "__main__":
     main()
