@@ -170,6 +170,8 @@ def scale_armrests(
 
     scaled_df = component_df.copy()
 
+
+
     for idx, row in scaled_df.iterrows():
 
         if row["body"] not in armrest_bodies:
