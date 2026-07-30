@@ -16,9 +16,8 @@ project_root/
 │ └── csv.md
 │
 ├── scripts/
-│ └── scaling/ #has codes to scale sofa components.
-│ └── verification/ #has codes used to check coordinates of components currently not usable.
-│ └── fusion_scripts/ #has scripts we run in fusion. !will not run in vscode.
+│ └── scaling/ # will codes to scale sofa components.
+│ └── fusion_scripts/ #has scripts we run in fusion. Mainly contains pahse 1 work.
 │
 │
 │

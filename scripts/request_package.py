@@ -1,3 +1,4 @@
+
 import os
 import cv2
 import shutil
@@ -71,7 +72,7 @@ print("✅ Supported image format.")
 
 destination = os.path.join(
     request_folder,
-    "original_image" + extension
+    file_name
 )
 
 shutil.copy(
@@ -130,7 +131,7 @@ print("Saved at:", processed_image_path)
 
 request_summary = {
     "request_id": request["request_id"],
-    "image_name": "original_image" + extension,
+    "image_name": file_name,
     "length_mm": request["length"],
     "width_mm": request["width"],
     "height_mm": request["height"]
