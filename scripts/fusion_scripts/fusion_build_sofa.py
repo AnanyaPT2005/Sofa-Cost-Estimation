@@ -12,7 +12,7 @@ def run(context):
 
     try:
 
-        CSV_PATH = r"G:\My Drive\sofa cost estimation\outputs\scaled_external.csv"
+        CSV_PATH = r"G:\My Drive\sofa cost estimation\outputs\scaled_external.csv" #change path if needed.
 
         if not os.path.exists(CSV_PATH):
             ui.messageBox("CSV not found:\n" + CSV_PATH)

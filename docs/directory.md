@@ -5,6 +5,7 @@ project_root/
 │
 ├── outputs/
 │ └── scaled_sofa_components.csv # Generated after scaling
+│
 ├── data/
 │ └── renamed_sofa_components.json # Original sofa components data
 │ └── sofa_metadata.json # Metadata for the sofa template
@@ -15,11 +16,11 @@ project_root/
 │ └── csv.md
 │
 ├── scripts/
-│ └── scaling/
-│ ├── scale.py # Main entry point
-│ ├── seat_scaler.py
-│ ├── backrest_scaler.py
-│ ├── armrest_scaler.py
-│ └── ... # Other scaling utilities
+│ └── scaling/ #has codes to scale sofa components.
+│ └── verification/ #has codes used to check coordinates of components currently not usable.
+│ └── fusion_scripts/ #has scripts we run in fusion. !will not run in vscode.
+│
+│
+│
 │
 └── ...
