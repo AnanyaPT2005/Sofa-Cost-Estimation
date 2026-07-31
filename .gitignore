@@ -29,3 +29,5 @@ backups/old outputs/
 backups/verification
 outputs/requests/
 local/
+
+backups/

@@ -20,6 +20,8 @@ project_root/
 │ └── fusion_scripts/ #has scripts we run in fusion. Mainly contains pahse 1 work.
 │
 │
+├── sofa 3d models/
+│   └── test_workflow.step
 │
 │
 └── ...
