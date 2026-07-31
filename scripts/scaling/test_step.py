@@ -11,14 +11,19 @@ from OCP.TDataStd import TDataStd_Name
 from OCP.TopExp import TopExp_Explorer
 from OCP.TopAbs import TopAbs_SOLID
 from OCP.TopoDS import TopoDS
+from OCP.BRep import BRep_Builder
+from OCP.TopoDS import TopoDS_Compound
 from OCP.BRepBndLib import BRepBndLib
 from OCP.Bnd import Bnd_Box
 from OCP.TDF import TDF_Label
+from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
+from OCP.IFSelect import IFSelect_RetDone
 from scale_step import scale_seat
 import inspect
 import re   
 
 STEP_FILE = r"G:\My Drive\sofa cost estimation\sofa 3d models\test_workfloe.step"
+OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
 
 def get_step_body_names(step_path):
     """
@@ -197,3 +202,37 @@ for i in range(1, free_shapes.Length() + 1):
 
             print(f"\nTotal solids found: {count}")
             print(f"Processed solids: {len(processed_solids)}")
+
+            # ----------------------------------
+            # Build a new compound
+            # ----------------------------------
+
+            builder = BRep_Builder()
+
+            compound = TopoDS_Compound()
+
+            builder.MakeCompound(compound)
+
+            for solid in processed_solids:
+                builder.Add(compound, solid)
+
+            print("\nNew compound created successfully.")
+            print(f"Contains {len(processed_solids)} solids.")
+            # ----------------------------------
+            # Export STEP
+            # ----------------------------------
+
+            writer = STEPControl_Writer()
+
+            writer.Transfer(
+                compound,
+                STEPControl_AsIs,
+            )
+
+            status = writer.Write(OUTPUT_STEP)
+
+            if status == IFSelect_RetDone:
+                print("\nSTEP exported successfully!")
+                print(OUTPUT_STEP)
+            else:
+                print("\nSTEP export failed!")
