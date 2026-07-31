@@ -14,11 +14,44 @@ from OCP.TopoDS import TopoDS
 from OCP.BRepBndLib import BRepBndLib
 from OCP.Bnd import Bnd_Box
 from OCP.TDF import TDF_Label
+from scale_step import scale_seat
+import inspect
+import re   
 
 STEP_FILE = r"G:\My Drive\sofa cost estimation\sofa 3d models\test_workfloe.step"
 
+def get_step_body_names(step_path):
+    """
+    Reads MANIFOLD_SOLID_BREP names from a STEP file
+    in the order they appear.
+    """
+
+    names = []
+
+    pattern = re.compile(
+        r"MANIFOLD_SOLID_BREP\('([^']+)'",
+        re.IGNORECASE
+    )
+
+    with open(step_path, "r", encoding="utf-8", errors="ignore") as f:
+
+        for line in f:
+
+            m = pattern.search(line)
+
+            if m:
+                names.append(m.group(1))
+
+    return names
+
 print(Path(STEP_FILE).exists())
 print(Path(STEP_FILE).resolve())
+step_body_names = get_step_body_names(STEP_FILE)
+
+print("\nBodies found in STEP:")
+
+for i, name in enumerate(step_body_names, start=1):
+    print(f"{i}. {name}")
 
 doc = TDocStd_Document(TCollection_ExtendedString("doc"))
 
@@ -114,34 +147,29 @@ for i in range(1, free_shapes.Length() + 1):
             explorer = TopExp_Explorer(shape, TopAbs_SOLID)
 
             count = 0
+            processed_solids = []
 
             while explorer.More():
 
                 count += 1
 
                 solid = TopoDS.Solid_s(explorer.Current())
-
-                solid_label = TDF_Label()
-
-                found = shape_tool.FindSubShape(
-                    referred,
-                    solid,
-                    solid_label,
-                )
+                if count <= len(step_body_names):
+                    body_name = step_body_names[count - 1]
+                else:
+                    body_name = "<Unknown>"
 
                 print("\n" + "=" * 60)
-                print(f"Solid {count}")
+                print(f"Solid {count} : {body_name}")
+                # ----------------------------------
+                # Call scaling function for seat only
+                # ----------------------------------
 
-                print("Found SubShape:", found)
+                if body_name == "seat":
 
-                if found:
+                    print("Calling scale_seat()...")
 
-                    print("Label:", solid_label)
-
-                    print("\nAvailable label methods:")
-                    for method in sorted(dir(solid_label)):
-                        if "Attr" in method or "Name" in method or "Find" in method:
-                            print(" ", method)
+                    solid = scale_seat(solid)
 
                 # ----------------------------
                 # Bounding Box
@@ -163,7 +191,9 @@ for i in range(1, free_shapes.Length() + 1):
                 print(f"L = {xmax - xmin:.2f}")
                 print(f"W = {ymax - ymin:.2f}")
                 print(f"H = {zmax - zmin:.2f}")
+                processed_solids.append(solid)
 
                 explorer.Next()
 
             print(f"\nTotal solids found: {count}")
+            print(f"Processed solids: {len(processed_solids)}")
