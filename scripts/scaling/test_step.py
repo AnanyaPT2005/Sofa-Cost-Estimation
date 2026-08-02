@@ -33,6 +33,8 @@ from OCP.BRepLProp import BRepLProp_SLProps
 from OCP.Bnd import Bnd_OBB
 from OCP.BRepBndLib import BRepBndLib
 from position_engine import move_body
+from position_engine import get_overlap
+
 
 STEP_FILE = r"G:\My Drive\sofa cost estimation\sofa 3d models\test_workfloe.step"
 OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
@@ -201,6 +203,11 @@ for i in range(1, free_shapes.Length() + 1):
             explorer = TopExp_Explorer(shape, TopAbs_SOLID)
 
             count = 0
+            
+        
+            scaled_seat = None
+            right_arm = None
+            seat_scale_info = None
             processed_solids = []
 
             while explorer.More():
@@ -255,14 +262,26 @@ for i in range(1, free_shapes.Length() + 1):
                 # ----------------------------------
 
                 if body_name == "seat":
-                    solid = scale_seat(
+
+                    
+                    solid, scale_info = scale_seat(
                         solid,
                         obb,
+                        body_name="seat",
+                        logical_dimension="length",
+                        factor=2.0,    
                     )
-                old_seat_length = 70.0
-                new_seat_length = 140.0
+                    scaled_seat = solid
+                    seat_scale_info = scale_info
+                    print("\nScale Info")
 
-                seat_delta = new_seat_length - old_seat_length
+                    for key, value in scale_info.items():
+                        print(f"{key} : {value}")
+
+                if body_name == "right_arm":
+                    right_arm = solid
+
+               
 
                 print("OBB computed.")
 
@@ -359,9 +378,22 @@ for i in range(1, free_shapes.Length() + 1):
                                 )
 
                         face_explorer.Next()
-                processed_solids.append(solid)
+                    processed_solids.append(solid)
 
                 explorer.Next()
+                # explorer loop ends here
+
+            print("\nDEBUG")
+            print("scaled_seat:", scaled_seat is None)
+            print("right_arm:", right_arm is None)
+            print("seat_scale_info:", seat_scale_info is None)
+            overlap = get_overlap(
+                scaled_seat,
+                right_arm,
+                seat_scale_info,
+            )
+
+            print("\nOverlap:", overlap)
 
             print(f"\nTotal solids found: {count}")
             print(f"Processed solids: {len(processed_solids)}")

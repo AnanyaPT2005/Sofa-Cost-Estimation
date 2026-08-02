@@ -7,9 +7,21 @@ from OCP.gp import (
 from OCP.BRepBuilderAPI import BRepBuilderAPI_GTransform
 from OCP.gp import gp_Ax3, gp_Pnt, gp_Dir
 
+BODY_AXIS_MAP = {
+    "seat": {
+        "length": "Z",
+        "width": "Y",
+        "height": "X",
+    },
+}
 
-
-def scale_seat(solid, obb):
+def scale_seat(
+    solid,
+    obb,
+    body_name,
+    logical_dimension,
+    factor,
+):
     """
     Part 1:
     Build the OBB coordinate system.
@@ -25,6 +37,8 @@ def scale_seat(solid, obb):
     xdir = obb.XDirection()
     ydir = obb.YDirection()
     zdir = obb.ZDirection()
+
+    obb_axis = BODY_AXIS_MAP[body_name][logical_dimension]
 
     # ------------------------------------
     # Build the OBB coordinate system
@@ -99,7 +113,15 @@ def scale_seat(solid, obb):
 
     # Test: Double Local X
     # S.SetValue(1, 1, 2.0)
-    S.SetValue(3, 3, 2.0)
+    axis_map = {
+        "X": 1,
+        "Y": 2,
+        "Z": 3,
+    }
+
+    axis_index = axis_map[obb_axis]
+
+    S.SetValue(axis_index, axis_index, factor)
 
     print("\nScale Matrix:")
 
@@ -181,6 +203,30 @@ def scale_seat(solid, obb):
             f"{FINAL.Value(r,2): .3f}",
             f"{FINAL.Value(r,3): .3f}",
         )
+    direction_map = {
+            "X": xdir,
+            "Y": ydir,
+            "Z": zdir,
+    }
+    size_map = {
+    "X": 2 * obb.XHSize(),
+    "Y": 2 * obb.YHSize(),
+    "Z": 2 * obb.ZHSize(),
+    }
 
 
-    return solid
+    old_size = size_map[obb_axis]
+
+    scale_info = {
+        
+
+        "direction": direction_map[obb_axis],
+        "logical_dimension": logical_dimension,
+
+        "old_size": old_size,
+        "new_size": old_size * factor,
+
+        "factor": factor,
+    }
+
+    return solid, scale_info
