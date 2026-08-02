@@ -19,8 +19,19 @@ from OCP.TDF import TDF_Label
 from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 from OCP.IFSelect import IFSelect_RetDone
 from scale_step import scale_seat
+from OCP.TopLoc import TopLoc_Location
+from OCP.gp import gp_Trsf
 import inspect
 import re   
+from OCP.TopAbs import TopAbs_FACE
+from OCP.BRepAdaptor import BRepAdaptor_Surface
+from OCP.GeomAbs import GeomAbs_Plane
+from OCP.BRepGProp import BRepGProp
+from OCP.GProp import GProp_GProps
+from OCP.BRepTools import BRepTools
+from OCP.BRepLProp import BRepLProp_SLProps
+from OCP.Bnd import Bnd_OBB
+from OCP.BRepBndLib import BRepBndLib
 
 STEP_FILE = r"G:\My Drive\sofa cost estimation\sofa 3d models\test_workfloe.step"
 OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
@@ -147,6 +158,43 @@ for i in range(1, free_shapes.Length() + 1):
             shape = shape_tool.GetShape_s(referred)
 
             print(shape)
+            # -----------------------------------
+            # Component placement
+            # -----------------------------------
+
+            location = shape_tool.GetShape_s(child).Location()
+
+            print("\nLocation:")
+            trsf = location.Transformation()
+
+            print("\nTransformation:")
+            vec_x = trsf.VectorialPart().Column(1)
+            vec_y = trsf.VectorialPart().Column(2)
+            vec_z = trsf.VectorialPart().Column(3)
+
+            print("\nLocal Axes")
+
+            print(
+                "X:",
+                vec_x.X(),
+                vec_x.Y(),
+                vec_x.Z(),
+            )
+
+            print(
+                "Y:",
+                vec_y.X(),
+                vec_y.Y(),
+                vec_y.Z(),
+            )
+
+            print(
+                "Z:",
+                vec_z.X(),
+                vec_z.Y(),
+                vec_z.Z(),
+            )
+
             print("\nEnumerating solids...")
 
             explorer = TopExp_Explorer(shape, TopAbs_SOLID)
@@ -166,15 +214,7 @@ for i in range(1, free_shapes.Length() + 1):
 
                 print("\n" + "=" * 60)
                 print(f"Solid {count} : {body_name}")
-                # ----------------------------------
-                # Call scaling function for seat only
-                # ----------------------------------
-
-                if body_name == "seat":
-
-                    print("Calling scale_seat()...")
-
-                    solid = scale_seat(solid)
+                
 
                 # ----------------------------
                 # Bounding Box
@@ -196,6 +236,124 @@ for i in range(1, free_shapes.Length() + 1):
                 print(f"L = {xmax - xmin:.2f}")
                 print(f"W = {ymax - ymin:.2f}")
                 print(f"H = {zmax - zmin:.2f}")
+
+                print("\nComputing Oriented Bounding Box...")
+
+                obb = Bnd_OBB()
+
+                BRepBndLib.AddOBB_s(
+                    solid,
+                    obb,
+                    True,   # use triangulation
+                    True,   # optimal
+                    True    # shape tolerance
+                )
+
+                # ----------------------------------
+                # Call scaling function for seat only
+                # ----------------------------------
+
+                if body_name == "seat":
+                    solid = scale_seat(
+                        solid,
+                        obb,
+                    )
+
+                print("OBB computed.")
+
+                center = obb.Center()
+
+                print("\n" + "=" * 60)
+                print(f"OBB for {body_name}")
+
+                center = obb.Center()
+
+                print(
+                    f"Center : ({center.X():.2f}, "
+                    f"{center.Y():.2f}, "
+                    f"{center.Z():.2f})"
+                )
+
+                xdir = obb.XDirection()
+                ydir = obb.YDirection()
+                zdir = obb.ZDirection()
+
+                print(
+                    f"Local X : ({xdir.X():.3f}, "
+                    f"{xdir.Y():.3f}, "
+                    f"{xdir.Z():.3f})"
+                )
+
+                print(
+                    f"Local Y : ({ydir.X():.3f}, "
+                    f"{ydir.Y():.3f}, "
+                    f"{ydir.Z():.3f})"
+                )
+
+                print(
+                    f"Local Z : ({zdir.X():.3f}, "
+                    f"{zdir.Y():.3f}, "
+                    f"{zdir.Z():.3f})"
+                )
+
+                print(
+                    f"OBB X Size : {2*obb.XHSize():.2f}"
+                )
+
+                print(
+                    f"OBB Y Size : {2*obb.YHSize():.2f}"
+                )
+
+                print(
+                    f"OBB Z Size : {2*obb.ZHSize():.2f}"
+                )                # ----------------------------------------
+                # Test: Print face normals of seat only
+                # ----------------------------------------
+
+                if body_name == "seat":
+
+                    print("\nFace normals:")
+
+                    face_explorer = TopExp_Explorer(
+                        solid,
+                        TopAbs_FACE
+                    )
+
+                    face_count = 0
+
+                    while face_explorer.More():
+
+                        face_count += 1
+
+                        face = TopoDS.Face_s(face_explorer.Current())
+
+                        surface = BRepAdaptor_Surface(face)
+
+                        if surface.GetType() == GeomAbs_Plane:
+
+                            u1, u2, v1, v2 = BRepTools.UVBounds_s(face)
+
+                            u = (u1 + u2) / 2
+                            v = (v1 + v2) / 2
+
+                            props = BRepLProp_SLProps(
+                                surface,
+                                u,
+                                v,
+                                1,
+                                1e-6
+                            )
+
+                            if props.IsNormalDefined():
+
+                                n = props.Normal()
+
+                                print(
+                                    f"Face {face_count}: "
+                                    f"({n.X():.3f}, {n.Y():.3f}, {n.Z():.3f})"
+                                )
+
+                        face_explorer.Next()
                 processed_solids.append(solid)
 
                 explorer.Next()
