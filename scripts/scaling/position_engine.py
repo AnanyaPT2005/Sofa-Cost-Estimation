@@ -65,9 +65,8 @@ def get_overlap(
 
 def move_body(
     solid,
-    dx,
-    dy,
-    dz,
+    direction,
+    distance,
 ):
     """
     Translate a body.
@@ -81,11 +80,11 @@ def move_body(
     trsf = gp_Trsf()
 
     trsf.SetTranslation(
-        gp_Vec(
-            dx,
-            dy,
-            dz,
-        )
+    gp_Vec(
+        direction.X() * distance,
+        direction.Y() * distance,
+        direction.Z() * distance,
+    )
     )
 
     transformer = BRepBuilderAPI_Transform(
@@ -96,8 +95,12 @@ def move_body(
 
     moved = transformer.Shape()
 
+    dx = direction.X() * distance
+    dy = direction.Y() * distance
+    dz = direction.Z() * distance
+
     print(
-        f"Moved body by ({dx}, {dy}, {dz}) mm"
+        f"Moved body by ({dx:.2f}, {dy:.2f}, {dz:.2f}) mm"
     )
 
     return moved

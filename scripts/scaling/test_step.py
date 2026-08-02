@@ -281,7 +281,8 @@ for i in range(1, free_shapes.Length() + 1):
                 if body_name == "right_arm":
                     right_arm = solid
 
-               
+                if body_name == "left_arm":
+                    left_arm = solid        
 
                 print("OBB computed.")
 
@@ -378,7 +379,7 @@ for i in range(1, free_shapes.Length() + 1):
                                 )
 
                         face_explorer.Next()
-                    processed_solids.append(solid)
+                processed_solids.append(solid)
 
                 explorer.Next()
                 # explorer loop ends here
@@ -394,6 +395,17 @@ for i in range(1, free_shapes.Length() + 1):
             )
 
             print("\nOverlap:", overlap)
+            right_arm = move_body(
+                right_arm,
+                seat_scale_info["direction"],
+                overlap/2,
+            )
+            left_arm = move_body(
+                left_arm,
+                seat_scale_info["direction"],
+                -overlap / 2,
+            )
+            
 
             print(f"\nTotal solids found: {count}")
             print(f"Processed solids: {len(processed_solids)}")
@@ -401,6 +413,17 @@ for i in range(1, free_shapes.Length() + 1):
             # ----------------------------------
             # Build a new compound
             # ----------------------------------
+            print("\nProcessed bodies:")
+
+            for s in processed_solids:
+                print(s)
+
+            processed_solids = [
+                scaled_seat,
+                left_arm,
+                processed_solids[2],   # backrest
+                right_arm,
+            ]
 
             builder = BRep_Builder()
 
