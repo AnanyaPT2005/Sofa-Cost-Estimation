@@ -98,7 +98,8 @@ def scale_seat(solid, obb):
     S.SetIdentity()
 
     # Test: Double Local X
-    S.SetValue(1, 1, 2.0)
+    # S.SetValue(1, 1, 2.0)
+    S.SetValue(3, 3, 2.0)
 
     print("\nScale Matrix:")
 

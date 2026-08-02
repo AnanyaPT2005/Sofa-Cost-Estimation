@@ -32,6 +32,7 @@ from OCP.BRepTools import BRepTools
 from OCP.BRepLProp import BRepLProp_SLProps
 from OCP.Bnd import Bnd_OBB
 from OCP.BRepBndLib import BRepBndLib
+from position_engine import move_body
 
 STEP_FILE = r"G:\My Drive\sofa cost estimation\sofa 3d models\test_workfloe.step"
 OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
@@ -258,6 +259,10 @@ for i in range(1, free_shapes.Length() + 1):
                         solid,
                         obb,
                     )
+                old_seat_length = 70.0
+                new_seat_length = 140.0
+
+                seat_delta = new_seat_length - old_seat_length
 
                 print("OBB computed.")
 
