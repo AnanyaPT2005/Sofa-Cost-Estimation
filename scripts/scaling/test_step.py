@@ -274,7 +274,7 @@ for i in range(1, free_shapes.Length() + 1):
                         obb,
                         body_name="seat",
                         logical_dimension="length",
-                        factor=0.5,    
+                        factor=2.0,    
                     )
                     scaled_seat = solid
                     seat_scale_info = scale_info
