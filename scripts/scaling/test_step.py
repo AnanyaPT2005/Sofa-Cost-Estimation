@@ -274,7 +274,7 @@ for i in range(1, free_shapes.Length() + 1):
                         obb,
                         body_name="seat",
                         logical_dimension="length",
-                        factor=2.0,    
+                        factor=0.5,    
                     )
                     scaled_seat = solid
                     seat_scale_info = scale_info
@@ -513,17 +513,6 @@ for i in range(1, free_shapes.Length() + 1):
             # ----------------------------------
             # Build a new compound
             # ----------------------------------
-            print("\nProcessed bodies:")
-
-            for s in processed_solids:
-                print(s)
-
-            processed_solids = [
-                scaled_seat,
-                left_arm,
-                processed_solids[2],   # backrest
-                right_arm,
-            ]
             print("\nProcessed bodies:")
 
             for s in processed_solids:
