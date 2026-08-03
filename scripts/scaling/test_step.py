@@ -18,7 +18,7 @@ from OCP.Bnd import Bnd_Box
 from OCP.TDF import TDF_Label
 from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 from OCP.IFSelect import IFSelect_RetDone
-from scale_step import scale_seat
+from scripts.scaling.scale_step2 import scale_seat
 from OCP.TopLoc import TopLoc_Location
 from OCP.gp import gp_Trsf
 import inspect
@@ -32,11 +32,11 @@ from OCP.BRepTools import BRepTools
 from OCP.BRepLProp import BRepLProp_SLProps
 from OCP.Bnd import Bnd_OBB
 from OCP.BRepBndLib import BRepBndLib
-from position_engine import move_body
-from position_engine import get_overlap
+from scripts.scaling.position_engine2 import move_body
+from scripts.scaling.position_engine2 import get_overlap
 
 
-STEP_FILE = r"G:\My Drive\sofa cost estimation\sofa 3d models\test_workfloe.step"
+STEP_FILE = r"G:\My Drive\sofa cost estimation\scripts\scaling\test_workfloe.step"
 OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
 
 def get_step_body_names(step_path):
