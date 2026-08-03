@@ -471,25 +471,33 @@ for i in range(1, free_shapes.Length() + 1):
 
             for item in attachment_map:
 
-                if item["attachment"] == "+length":
+                attachment = item["attachment"]
+
+                sign = attachment[0]
+                logical_dimension = attachment[1:]
+
+                if logical_dimension != seat_scale_info["logical_dimension"]:
+                    continue
+
+                if sign == "+":
 
                     item["shape"] = move_body(
                         item["shape"],
                         seat_scale_info["direction"],
-                        overlap / 2,
+                        overlap,
                     )
 
-                    print(item["name"], "moved +length")
+                    print(item["name"], "moved", attachment)
 
-                elif item["attachment"] == "-length":
+                elif sign == "-":
 
                     item["shape"] = move_body(
                         item["shape"],
                         seat_scale_info["direction"],
-                        -overlap / 2,
+                        -overlap,
                     )
 
-                    print(item["name"], "moved -length")
+                    print(item["name"], "moved", attachment)
             for i, solid in enumerate(processed_solids):
 
                 if step_body_names[i] == "seat":
@@ -516,6 +524,10 @@ for i in range(1, free_shapes.Length() + 1):
                 processed_solids[2],   # backrest
                 right_arm,
             ]
+            print("\nProcessed bodies:")
+
+            for s in processed_solids:
+                print(s)
 
             builder = BRep_Builder()
 
