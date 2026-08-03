@@ -18,7 +18,7 @@ from OCP.Bnd import Bnd_Box
 from OCP.TDF import TDF_Label
 from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 from OCP.IFSelect import IFSelect_RetDone
-from scripts.scaling.scale_step2 import scale_seat
+from scale_step2 import scale_seat
 from OCP.TopLoc import TopLoc_Location
 from OCP.gp import gp_Trsf
 import inspect
@@ -32,9 +32,13 @@ from OCP.BRepTools import BRepTools
 from OCP.BRepLProp import BRepLProp_SLProps
 from OCP.Bnd import Bnd_OBB
 from OCP.BRepBndLib import BRepBndLib
-from scripts.scaling.position_engine2 import move_body
-from scripts.scaling.position_engine2 import get_overlap
-
+from position_engine2 import move_body
+from position_engine2 import get_overlap
+from position_engine2 import vector_between
+from position_engine2 import get_obb
+from position_engine2 import projection_on_axis
+from position_engine2 import classify_attachment
+from scale_step2 import get_logical_dimension
 
 STEP_FILE = r"G:\My Drive\sofa cost estimation\scripts\scaling\test_workfloe.step"
 OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
@@ -209,6 +213,7 @@ for i in range(1, free_shapes.Length() + 1):
             right_arm = None
             seat_scale_info = None
             processed_solids = []
+            all_bodies = []
 
             while explorer.More():
 
@@ -379,6 +384,13 @@ for i in range(1, free_shapes.Length() + 1):
                                 )
 
                         face_explorer.Next()
+
+                all_bodies.append(
+                    {
+                        "name": body_name,
+                        "shape": solid,
+                    }
+                )
                 processed_solids.append(solid)
 
                 explorer.Next()
@@ -409,6 +421,62 @@ for i in range(1, free_shapes.Length() + 1):
 
             print(f"\nTotal solids found: {count}")
             print(f"Processed solids: {len(processed_solids)}")
+            attachment_map = []
+            for body in all_bodies:
+
+                if body["name"] == "seat":
+                    continue
+
+                vec = vector_between(
+                    scaled_seat,
+                    body["shape"],
+                )
+                seat_obb = get_obb(scaled_seat)
+
+                x_axis = seat_obb.XDirection()
+                y_axis = seat_obb.YDirection()
+                z_axis = seat_obb.ZDirection()
+
+                px = projection_on_axis(
+                    vec,
+                    x_axis,
+                )
+
+                py = projection_on_axis(
+                    vec,
+                    y_axis,
+                )
+
+                pz = projection_on_axis(
+                    vec,
+                    z_axis,
+                )
+                sign, axis = classify_attachment(
+                    px,
+                    py,
+                    pz,
+                )
+                logical = get_logical_dimension(
+                    "seat",
+                    axis,
+                )
+
+                attachment_map.append(
+                {
+                    "name": body["name"],
+                    "shape": body["shape"],
+                    "attachment": f"{sign}{logical}",
+                }
+                )
+            print("\nAttachment Map")
+
+            for item in attachment_map:
+
+                print(
+                    item["name"],
+                    "->",
+                    item["attachment"],
+                ) 
 
             # ----------------------------------
             # Build a new compound
