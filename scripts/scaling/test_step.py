@@ -407,17 +407,6 @@ for i in range(1, free_shapes.Length() + 1):
             )
 
             print("\nOverlap:", overlap)
-            right_arm = move_body(
-                right_arm,
-                seat_scale_info["direction"],
-                overlap/2,
-            )
-            left_arm = move_body(
-                left_arm,
-                seat_scale_info["direction"],
-                -overlap / 2,
-            )
-            
 
             print(f"\nTotal solids found: {count}")
             print(f"Processed solids: {len(processed_solids)}")
@@ -478,6 +467,41 @@ for i in range(1, free_shapes.Length() + 1):
                     item["attachment"],
                 ) 
 
+            print("\nMoving Bodies")
+
+            for item in attachment_map:
+
+                if item["attachment"] == "+length":
+
+                    item["shape"] = move_body(
+                        item["shape"],
+                        seat_scale_info["direction"],
+                        overlap / 2,
+                    )
+
+                    print(item["name"], "moved +length")
+
+                elif item["attachment"] == "-length":
+
+                    item["shape"] = move_body(
+                        item["shape"],
+                        seat_scale_info["direction"],
+                        -overlap / 2,
+                    )
+
+                    print(item["name"], "moved -length")
+            for i, solid in enumerate(processed_solids):
+
+                if step_body_names[i] == "seat":
+                    processed_solids[i] = scaled_seat
+
+                else:
+
+                    for item in attachment_map:
+
+                        if item["name"] == step_body_names[i]:
+                            processed_solids[i] = item["shape"]
+                            break
             # ----------------------------------
             # Build a new compound
             # ----------------------------------
