@@ -29,5 +29,6 @@ backups/old outputs/
 backups/verification
 outputs/requests/
 local/
+scripts/scaling/scaled_step.step
 
 backups/
