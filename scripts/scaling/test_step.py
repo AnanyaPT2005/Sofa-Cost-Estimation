@@ -1,25 +1,25 @@
+
+
 """
 Main pipeline for STEP processing.
-
-Workflow:
-1. Read STEP file
-2. Read body names
-3. Parse assembly
-4. Extract solids
-5. Compute OBB
-6. Scale selected body
-7. (Future) Position dependent bodies
-8. Export STEP
 """
 
 from body_names import get_step_body_names
 from step_reader import read_step
 from assembly_parser import get_reference_shape
 from body_extractor import extract_solids
-from bbox_engine import compute_bbox, compute_obb, print_bbox, print_obb
-from scale_step import scale_body
+from bbox_engine import (
+    compute_bbox,
+    compute_obb,
+    print_bbox,
+    print_obb,
+)
 
-from export_step import export_step
+from scale_step import (
+    scale_body,
+    get_logical_dimension,
+)
+
 from position_engine import (
     get_overlap,
     move_body,
@@ -29,10 +29,8 @@ from position_engine import (
     classify_attachment,
 )
 
-from scale_step import (
-    scale_body,
-    get_logical_dimension,
-)
+from export_step import export_step
+
 
 STEP_FILE = r"C:\Users\DEEPIKA.S\Desktop\sofa_cost\Sofa-Cost-Estimation\scripts\scaling\test_workfloe.step"
 
@@ -41,10 +39,6 @@ OUTPUT_STEP = r"C:\Users\DEEPIKA.S\Desktop\sofa_cost\Sofa-Cost-Estimation\script
 
 def main():
 
-    # ----------------------------------------
-    # Read body names
-    # ----------------------------------------
-
     body_names = get_step_body_names(STEP_FILE)
 
     print("\nBodies found:")
@@ -52,37 +46,25 @@ def main():
     for i, name in enumerate(body_names, start=1):
         print(f"{i}. {name}")
 
-    # ----------------------------------------
-    # Read STEP file
-    # ----------------------------------------
-
     shape_tool = read_step(STEP_FILE)
 
-    # ----------------------------------------
-    # Resolve assembly
-    # ----------------------------------------
-
     shape = get_reference_shape(shape_tool)
-
-    # ----------------------------------------
-    # Extract solids
-    # ----------------------------------------
 
     solids = extract_solids(shape)
 
     processed_solids = []
 
-    # ----------------------------------------
-    # Store scaled seat information
-    # ----------------------------------------
+    all_bodies = []
 
     scaled_seat = None
     seat_scale_info = None
 
-    # ----------------------------------------
-    # Process every body
-    # ----------------------------------------
-    all_bodies = []
+    right_arm = None
+
+    # ----------------------------------------------------
+    # Process all bodies
+    # ----------------------------------------------------
+
     for solid, body_name in zip(solids, body_names):
 
         print("\n" + "=" * 60)
@@ -102,144 +84,186 @@ def main():
             obb,
         )
 
-        # ----------------------------------------
-        # Scale only seat
-        # ----------------------------------------
+        # -----------------------------
+        # Scale Seat
+        # -----------------------------
 
-    if body_name == "seat":
+        if body_name == "seat":
 
-        solid, seat_scale_info = scale_body(
-        solid=solid,
-        obb=obb,
-        body_name=body_name,
-        logical_dimension="length",
-        factor=2.0,
-    )
+            solid, seat_scale_info = scale_body(
+                solid=solid,
+                obb=obb,
+                body_name="seat",
+                logical_dimension="length",
+                factor=0.5,
+            )
 
-    scaled_seat = solid
+            scaled_seat = solid
 
-# Store EVERY body (not just the seat)
-    all_bodies.append({
-    "name": body_name,
-    "shape": solid,
-})
+            print("\nScale Info")
 
-    processed_solids.append(solid)
-    # ----------------------------------------
-    # Export
-    # ----------------------------------------
-    overlap = get_overlap(
-    scaled_seat,
-    all_bodies[1]["shape"],
-    seat_scale_info,
-)
-    
-    
-    # ----------------------------------------
-# Build attachment map
-# ----------------------------------------
+            for k, v in seat_scale_info.items():
+                print(k, ":", v)
 
-attachment_map = []
+        elif body_name == "right_arm":
 
-seat_obb = get_obb(scaled_seat)
+            right_arm = solid
 
-for body in all_bodies:
+        all_bodies.append(
+            {
+                "name": body_name,
+                "shape": solid,
+            }
+        )
 
-    if body["name"] == "seat":
-        continue
-
-    vec = vector_between(
-        scaled_seat,
-        body["shape"],
-    )
-
-    px = projection_on_axis(
-        vec,
-        seat_obb.XDirection(),
-    )
-
-    py = projection_on_axis(
-        vec,
-        seat_obb.YDirection(),
-    )
-
-    pz = projection_on_axis(
-        vec,
-        seat_obb.ZDirection(),
-    )
-
-    sign, axis = classify_attachment(
-        px,
-        py,
-        pz,
-    )
-
-    attachment_map.append({
-
-        "name": body["name"],
-
-        "shape": body["shape"],
-
-        "sign": sign,
-
-        "axis": axis,
-
-    })
-    
-    
-    # ----------------------------------------
-# Move attached bodies
-# ----------------------------------------
-
-for item in attachment_map:
-
-    # Move only bodies attached along
-    # the seat length
-    if item["axis"] != seat_scale_info["logical_axis"]:
-        continue
+        processed_solids.append(solid)
+        # ----------------------------------------------------
+    # Compute overlap using right arm
+    # ----------------------------------------------------
 
     overlap = get_overlap(
         scaled_seat,
-        item["shape"],
+        right_arm,
         seat_scale_info,
     )
 
-    # Positive side (right arm)
-    if item["sign"] == "+":
+    print("\nOverlap :", overlap)
 
-        item["shape"] = move_body(
-            item["shape"],
-            seat_scale_info["direction"],
-            overlap,
+    # ----------------------------------------------------
+    # Build attachment map
+    # ----------------------------------------------------
+
+    attachment_map = []
+
+    seat_obb = get_obb(scaled_seat)
+
+    x_axis = seat_obb.XDirection()
+    y_axis = seat_obb.YDirection()
+    z_axis = seat_obb.ZDirection()
+
+    for body in all_bodies:
+
+        if body["name"] == "seat":
+            continue
+
+        vec = vector_between(
+            scaled_seat,
+            body["shape"],
         )
 
-    # Negative side (left arm)
-    else:
-
-        item["shape"] = move_body(
-            item["shape"],
-            seat_scale_info["direction"],
-            -overlap,
+        px = projection_on_axis(
+            vec,
+            x_axis,
         )
-        
-    
-    
-    # ----------------------------------------
-# Update processed solids
-# ----------------------------------------
 
-for i, body_name in enumerate(body_names):
+        py = projection_on_axis(
+            vec,
+            y_axis,
+        )
 
-    if body_name == "seat":
-        processed_solids[i] = scaled_seat
-        continue
+        pz = projection_on_axis(
+            vec,
+            z_axis,
+        )
+
+        sign, axis = classify_attachment(
+            px,
+            py,
+            pz,
+        )
+
+        logical = get_logical_dimension(
+            "seat",
+            axis,
+        )
+
+        attachment_map.append(
+            {
+                "name": body["name"],
+                "shape": body["shape"],
+                "attachment": f"{sign}{logical}",
+            }
+        )
+
+    print("\nAttachment Map")
 
     for item in attachment_map:
 
-        if item["name"] == body_name:
+        print(
+            item["name"],
+            "->",
+            item["attachment"],
+        )
 
-            processed_solids[i] = item["shape"]
-            break
+    # ----------------------------------------------------
+    # Move attached bodies
+    # ----------------------------------------------------
+
+    print("\nMoving Bodies")
+
+    for item in attachment_map:
+
+        attachment = item["attachment"]
+
+        sign = attachment[0]
+
+        logical_dimension = attachment[1:]
+
+        # Move only bodies attached to the scaled dimension
+        if logical_dimension != seat_scale_info["logical_dimension"]:
+            continue
+
+        if sign == "+":
+
+            item["shape"] = move_body(
+                item["shape"],
+                seat_scale_info["direction"],
+                overlap,
+            )
+
+            print(
+                item["name"],
+                "moved",
+                attachment,
+            )
+
+        elif sign == "-":
+
+            item["shape"] = move_body(
+                item["shape"],
+                seat_scale_info["direction"],
+                -overlap,
+            )
+
+            print(
+                item["name"],
+                "moved",
+                attachment,
+            )
+
+    # ----------------------------------------------------
+    # Replace moved bodies
+    # ----------------------------------------------------
+
+    for i, body_name in enumerate(body_names):
+
+        if body_name == "seat":
+
+            processed_solids[i] = scaled_seat
+
+        else:
+
+            for item in attachment_map:
+
+                if item["name"] == body_name:
+
+                    processed_solids[i] = item["shape"]
+                    break
+
+    # ----------------------------------------------------
+    # Export STEP
+    # ----------------------------------------------------
+
     export_step(
         processed_solids,
         OUTPUT_STEP,
