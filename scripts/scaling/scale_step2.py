@@ -15,6 +15,24 @@ BODY_AXIS_MAP = {
     },
 }
 
+def get_logical_dimension(
+    body_name,
+    obb_axis,
+):
+    """
+    Converts OBB axis back to
+    logical dimension.
+    """
+
+    mapping = BODY_AXIS_MAP[body_name]
+
+    for logical, axis in mapping.items():
+
+        if axis == obb_axis:
+            return logical
+
+    return None
+
 def scale_seat(
     solid,
     obb,

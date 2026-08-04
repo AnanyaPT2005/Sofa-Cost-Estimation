@@ -1,456 +1,250 @@
-#this is a test file to read step file, resolve reference and try to enumerate bodies.
-# it enumerates the bodies.
+"""
+Main pipeline for STEP processing.
 
-from OCP.STEPCAFControl import STEPCAFControl_Reader
-from OCP.TDocStd import TDocStd_Document
-from OCP.TCollection import TCollection_ExtendedString
-from OCP.XCAFDoc import XCAFDoc_DocumentTool
-from OCP.TDF import TDF_LabelSequence
-from pathlib import Path
-from OCP.TDataStd import TDataStd_Name
-from OCP.TopExp import TopExp_Explorer
-from OCP.TopAbs import TopAbs_SOLID
-from OCP.TopoDS import TopoDS
-from OCP.BRep import BRep_Builder
-from OCP.TopoDS import TopoDS_Compound
-from OCP.BRepBndLib import BRepBndLib
-from OCP.Bnd import Bnd_Box
-from OCP.TDF import TDF_Label
-from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
-from OCP.IFSelect import IFSelect_RetDone
-from scripts.scaling.scale_step2 import scale_seat
-from OCP.TopLoc import TopLoc_Location
-from OCP.gp import gp_Trsf
-import inspect
-import re   
-from OCP.TopAbs import TopAbs_FACE
-from OCP.BRepAdaptor import BRepAdaptor_Surface
-from OCP.GeomAbs import GeomAbs_Plane
-from OCP.BRepGProp import BRepGProp
-from OCP.GProp import GProp_GProps
-from OCP.BRepTools import BRepTools
-from OCP.BRepLProp import BRepLProp_SLProps
-from OCP.Bnd import Bnd_OBB
-from OCP.BRepBndLib import BRepBndLib
-from scripts.scaling.position_engine2 import move_body
-from scripts.scaling.position_engine2 import get_overlap
+Workflow:
+1. Read STEP file
+2. Read body names
+3. Parse assembly
+4. Extract solids
+5. Compute OBB
+6. Scale selected body
+7. (Future) Position dependent bodies
+8. Export STEP
+"""
+
+from body_names import get_step_body_names
+from step_reader import read_step
+from assembly_parser import get_reference_shape
+from body_extractor import extract_solids
+from bbox_engine import compute_bbox, compute_obb, print_bbox, print_obb
+from scale_step import scale_body
+
+from export_step import export_step
+from position_engine import (
+    get_overlap,
+    move_body,
+    vector_between,
+    get_obb,
+    projection_on_axis,
+    classify_attachment,
+)
+
+from scale_step import (
+    scale_body,
+    get_logical_dimension,
+)
+
+STEP_FILE = r"C:\Users\DEEPIKA.S\Desktop\sofa_cost\Sofa-Cost-Estimation\scripts\scaling\test_workfloe.step"
+
+OUTPUT_STEP = r"C:\Users\DEEPIKA.S\Desktop\sofa_cost\Sofa-Cost-Estimation\scripts\scaling\scaled_step.step"
 
 
-STEP_FILE = r"G:\My Drive\sofa cost estimation\scripts\scaling\test_workfloe.step"
-OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
+def main():
 
-def get_step_body_names(step_path):
-    """
-    Reads MANIFOLD_SOLID_BREP names from a STEP file
-    in the order they appear.
-    """
+    # ----------------------------------------
+    # Read body names
+    # ----------------------------------------
 
-    names = []
+    body_names = get_step_body_names(STEP_FILE)
 
-    pattern = re.compile(
-        r"MANIFOLD_SOLID_BREP\('([^']+)'",
-        re.IGNORECASE
+    print("\nBodies found:")
+
+    for i, name in enumerate(body_names, start=1):
+        print(f"{i}. {name}")
+
+    # ----------------------------------------
+    # Read STEP file
+    # ----------------------------------------
+
+    shape_tool = read_step(STEP_FILE)
+
+    # ----------------------------------------
+    # Resolve assembly
+    # ----------------------------------------
+
+    shape = get_reference_shape(shape_tool)
+
+    # ----------------------------------------
+    # Extract solids
+    # ----------------------------------------
+
+    solids = extract_solids(shape)
+
+    processed_solids = []
+
+    # ----------------------------------------
+    # Store scaled seat information
+    # ----------------------------------------
+
+    scaled_seat = None
+    seat_scale_info = None
+
+    # ----------------------------------------
+    # Process every body
+    # ----------------------------------------
+    all_bodies = []
+    for solid, body_name in zip(solids, body_names):
+
+        print("\n" + "=" * 60)
+        print(body_name)
+
+        bbox = compute_bbox(solid)
+
+        print_bbox(
+            body_name,
+            bbox,
+        )
+
+        obb = compute_obb(solid)
+
+        print_obb(
+            body_name,
+            obb,
+        )
+
+        # ----------------------------------------
+        # Scale only seat
+        # ----------------------------------------
+
+    if body_name == "seat":
+
+        solid, seat_scale_info = scale_body(
+        solid=solid,
+        obb=obb,
+        body_name=body_name,
+        logical_dimension="length",
+        factor=2.0,
     )
 
-    with open(step_path, "r", encoding="utf-8", errors="ignore") as f:
+    scaled_seat = solid
 
-        for line in f:
+# Store EVERY body (not just the seat)
+    all_bodies.append({
+    "name": body_name,
+    "shape": solid,
+})
 
-            m = pattern.search(line)
+    processed_solids.append(solid)
+    # ----------------------------------------
+    # Export
+    # ----------------------------------------
+    overlap = get_overlap(
+    scaled_seat,
+    all_bodies[1]["shape"],
+    seat_scale_info,
+)
+    
+    
+    # ----------------------------------------
+# Build attachment map
+# ----------------------------------------
 
-            if m:
-                names.append(m.group(1))
+attachment_map = []
 
-    return names
+seat_obb = get_obb(scaled_seat)
 
-print(Path(STEP_FILE).exists())
-print(Path(STEP_FILE).resolve())
-step_body_names = get_step_body_names(STEP_FILE)
+for body in all_bodies:
 
-print("\nBodies found in STEP:")
+    if body["name"] == "seat":
+        continue
 
-for i, name in enumerate(step_body_names, start=1):
-    print(f"{i}. {name}")
+    vec = vector_between(
+        scaled_seat,
+        body["shape"],
+    )
 
-doc = TDocStd_Document(TCollection_ExtendedString("doc"))
+    px = projection_on_axis(
+        vec,
+        seat_obb.XDirection(),
+    )
 
-reader = STEPCAFControl_Reader()
+    py = projection_on_axis(
+        vec,
+        seat_obb.YDirection(),
+    )
 
-status = reader.ReadFile(STEP_FILE)
-print("Read status:", status)
+    pz = projection_on_axis(
+        vec,
+        seat_obb.ZDirection(),
+    )
 
-if not reader.Transfer(doc):
-    raise RuntimeError("Failed to transfer STEP into XDE document")
+    sign, axis = classify_attachment(
+        px,
+        py,
+        pz,
+    )
 
-shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    attachment_map.append({
 
-free_shapes = TDF_LabelSequence()
-shape_tool.GetFreeShapes(free_shapes)
+        "name": body["name"],
 
-print("Free shapes:", free_shapes.Length())
-print("\nFree shapes:", free_shapes.Length())
+        "shape": body["shape"],
 
-for i in range(1, free_shapes.Length() + 1):
+        "sign": sign,
 
-    free_shape = free_shapes.Value(i)
+        "axis": axis,
 
-    free_name = TDataStd_Name()
+    })
+    
+    
+    # ----------------------------------------
+# Move attached bodies
+# ----------------------------------------
 
-    if free_shape.FindAttribute(TDataStd_Name.GetID_s(), free_name):
-        print("\nAssembly:", free_name.Get().ToExtString())
+for item in attachment_map:
+
+    # Move only bodies attached along
+    # the seat length
+    if item["axis"] != seat_scale_info["logical_axis"]:
+        continue
+
+    overlap = get_overlap(
+        scaled_seat,
+        item["shape"],
+        seat_scale_info,
+    )
+
+    # Positive side (right arm)
+    if item["sign"] == "+":
+
+        item["shape"] = move_body(
+            item["shape"],
+            seat_scale_info["direction"],
+            overlap,
+        )
+
+    # Negative side (left arm)
     else:
-        print("\nAssembly: <No Name>")
 
-    # -----------------------------------
-    # Components
-    # -----------------------------------
-
-    children = TDF_LabelSequence()
-    shape_tool.GetComponents_s(free_shape, children)
-
-    print("Components:", children.Length())
-
-    for j in range(1, children.Length() + 1):
-
-        child = children.Value(j)
-
-        child_name = TDataStd_Name()
-
-        if child.FindAttribute(TDataStd_Name.GetID_s(), child_name):
-            print(f"  Component {j}: {child_name.Get().ToExtString()}")
-            print("    Is Assembly   :", shape_tool.IsAssembly_s(child))
-            print("    Is Component  :", shape_tool.IsComponent_s(child))
-            print("    Is Compound   :", shape_tool.IsCompound_s(child))
-            print("    Is SimpleShape:", shape_tool.IsSimpleShape_s(child))
-            print("    Is Reference  :", shape_tool.IsReference_s(child))
-            
-            
-        else:
-            print(f"  Component {j}: <No Name>")
+        item["shape"] = move_body(
+            item["shape"],
+            seat_scale_info["direction"],
+            -overlap,
+        )
         
+    
+    
+    # ----------------------------------------
+# Update processed solids
+# ----------------------------------------
 
-        # -----------------------------------
-        # Resolve reference
-        # -----------------------------------
+for i, body_name in enumerate(body_names):
 
-        if shape_tool.IsReference_s(child):
+    if body_name == "seat":
+        processed_solids[i] = scaled_seat
+        continue
 
-            from OCP.TDF import TDF_Label
+    for item in attachment_map:
 
-            referred = TDF_Label()
+        if item["name"] == body_name:
 
-            ok = shape_tool.GetReferredShape_s(
-                child,
-                referred,
-            )
+            processed_solids[i] = item["shape"]
+            break
+    export_step(
+        processed_solids,
+        OUTPUT_STEP,
+    )
 
-            print("Resolved:", ok)
-            # methods = [m for m in dir(shape_tool) if "Search" in m or "Label" in m or "Shape" in m]
-            # for m in sorted(methods):
-            #     print(m)
-            referred_name = TDataStd_Name()
 
-            if referred.FindAttribute(TDataStd_Name.GetID_s(), referred_name):
-                print("    Refers to :", referred_name.Get().ToExtString())
-            else:
-                print("    Refers to : <No Name>")
-
-            print("    Is SimpleShape :", shape_tool.IsSimpleShape_s(referred))
-            print("    Is Assembly    :", shape_tool.IsAssembly_s(referred))
-            print("    Is Component  :", shape_tool.IsComponent_s(referred))
-            shape = shape_tool.GetShape_s(referred)
-
-            print(shape)
-            # -----------------------------------
-            # Component placement
-            # -----------------------------------
-
-            location = shape_tool.GetShape_s(child).Location()
-
-            print("\nLocation:")
-            trsf = location.Transformation()
-
-            print("\nTransformation:")
-            vec_x = trsf.VectorialPart().Column(1)
-            vec_y = trsf.VectorialPart().Column(2)
-            vec_z = trsf.VectorialPart().Column(3)
-
-            print("\nLocal Axes")
-
-            print(
-                "X:",
-                vec_x.X(),
-                vec_x.Y(),
-                vec_x.Z(),
-            )
-
-            print(
-                "Y:",
-                vec_y.X(),
-                vec_y.Y(),
-                vec_y.Z(),
-            )
-
-            print(
-                "Z:",
-                vec_z.X(),
-                vec_z.Y(),
-                vec_z.Z(),
-            )
-
-            print("\nEnumerating solids...")
-
-            explorer = TopExp_Explorer(shape, TopAbs_SOLID)
-
-            count = 0
-            
-        
-            scaled_seat = None
-            right_arm = None
-            seat_scale_info = None
-            processed_solids = []
-
-            while explorer.More():
-
-                count += 1
-
-                solid = TopoDS.Solid_s(explorer.Current())
-                if count <= len(step_body_names):
-                    body_name = step_body_names[count - 1]
-                else:
-                    body_name = "<Unknown>"
-
-                print("\n" + "=" * 60)
-                print(f"Solid {count} : {body_name}")
-                
-
-                # ----------------------------
-                # Bounding Box
-                # ----------------------------
-
-                box = Bnd_Box()
-
-                BRepBndLib.Add_s(
-                    solid,
-                    box,
-                )
-
-                xmin, ymin, zmin, xmax, ymax, zmax = box.Get()
-
-                print(f"X : {xmin:.2f} -> {xmax:.2f}")
-                print(f"Y : {ymin:.2f} -> {ymax:.2f}")
-                print(f"Z : {zmin:.2f} -> {zmax:.2f}")
-
-                print(f"L = {xmax - xmin:.2f}")
-                print(f"W = {ymax - ymin:.2f}")
-                print(f"H = {zmax - zmin:.2f}")
-
-                print("\nComputing Oriented Bounding Box...")
-
-                obb = Bnd_OBB()
-
-                BRepBndLib.AddOBB_s(
-                    solid,
-                    obb,
-                    True,   # use triangulation
-                    True,   # optimal
-                    True    # shape tolerance
-                )
-
-                # ----------------------------------
-                # Call scaling function for seat only
-                # ----------------------------------
-
-                if body_name == "seat":
-
-                    
-                    solid, scale_info = scale_seat(
-                        solid,
-                        obb,
-                        body_name="seat",
-                        logical_dimension="length",
-                        factor=2.0,    
-                    )
-                    scaled_seat = solid
-                    seat_scale_info = scale_info
-                    print("\nScale Info")
-
-                    for key, value in scale_info.items():
-                        print(f"{key} : {value}")
-
-                if body_name == "right_arm":
-                    right_arm = solid
-
-                if body_name == "left_arm":
-                    left_arm = solid        
-
-                print("OBB computed.")
-
-                center = obb.Center()
-
-                print("\n" + "=" * 60)
-                print(f"OBB for {body_name}")
-
-                center = obb.Center()
-
-                print(
-                    f"Center : ({center.X():.2f}, "
-                    f"{center.Y():.2f}, "
-                    f"{center.Z():.2f})"
-                )
-
-                xdir = obb.XDirection()
-                ydir = obb.YDirection()
-                zdir = obb.ZDirection()
-
-                print(
-                    f"Local X : ({xdir.X():.3f}, "
-                    f"{xdir.Y():.3f}, "
-                    f"{xdir.Z():.3f})"
-                )
-
-                print(
-                    f"Local Y : ({ydir.X():.3f}, "
-                    f"{ydir.Y():.3f}, "
-                    f"{ydir.Z():.3f})"
-                )
-
-                print(
-                    f"Local Z : ({zdir.X():.3f}, "
-                    f"{zdir.Y():.3f}, "
-                    f"{zdir.Z():.3f})"
-                )
-
-                print(
-                    f"OBB X Size : {2*obb.XHSize():.2f}"
-                )
-
-                print(
-                    f"OBB Y Size : {2*obb.YHSize():.2f}"
-                )
-
-                print(
-                    f"OBB Z Size : {2*obb.ZHSize():.2f}"
-                )                # ----------------------------------------
-                # Test: Print face normals of seat only
-                # ----------------------------------------
-
-                if body_name == "seat":
-
-                    print("\nFace normals:")
-
-                    face_explorer = TopExp_Explorer(
-                        solid,
-                        TopAbs_FACE
-                    )
-
-                    face_count = 0
-
-                    while face_explorer.More():
-
-                        face_count += 1
-
-                        face = TopoDS.Face_s(face_explorer.Current())
-
-                        surface = BRepAdaptor_Surface(face)
-
-                        if surface.GetType() == GeomAbs_Plane:
-
-                            u1, u2, v1, v2 = BRepTools.UVBounds_s(face)
-
-                            u = (u1 + u2) / 2
-                            v = (v1 + v2) / 2
-
-                            props = BRepLProp_SLProps(
-                                surface,
-                                u,
-                                v,
-                                1,
-                                1e-6
-                            )
-
-                            if props.IsNormalDefined():
-
-                                n = props.Normal()
-
-                                print(
-                                    f"Face {face_count}: "
-                                    f"({n.X():.3f}, {n.Y():.3f}, {n.Z():.3f})"
-                                )
-
-                        face_explorer.Next()
-                processed_solids.append(solid)
-
-                explorer.Next()
-                # explorer loop ends here
-
-            print("\nDEBUG")
-            print("scaled_seat:", scaled_seat is None)
-            print("right_arm:", right_arm is None)
-            print("seat_scale_info:", seat_scale_info is None)
-            overlap = get_overlap(
-                scaled_seat,
-                right_arm,
-                seat_scale_info,
-            )
-
-            print("\nOverlap:", overlap)
-            right_arm = move_body(
-                right_arm,
-                seat_scale_info["direction"],
-                overlap/2,
-            )
-            left_arm = move_body(
-                left_arm,
-                seat_scale_info["direction"],
-                -overlap / 2,
-            )
-            
-
-            print(f"\nTotal solids found: {count}")
-            print(f"Processed solids: {len(processed_solids)}")
-
-            # ----------------------------------
-            # Build a new compound
-            # ----------------------------------
-            print("\nProcessed bodies:")
-
-            for s in processed_solids:
-                print(s)
-
-            processed_solids = [
-                scaled_seat,
-                left_arm,
-                processed_solids[2],   # backrest
-                right_arm,
-            ]
-
-            builder = BRep_Builder()
-
-            compound = TopoDS_Compound()
-
-            builder.MakeCompound(compound)
-
-            for solid in processed_solids:
-                builder.Add(compound, solid)
-
-            print("\nNew compound created successfully.")
-            print(f"Contains {len(processed_solids)} solids.")
-            # ----------------------------------
-            # Export STEP
-            # ----------------------------------
-
-            writer = STEPControl_Writer()
-
-            writer.Transfer(
-                compound,
-                STEPControl_AsIs,
-            )
-
-            status = writer.Write(OUTPUT_STEP)
-
-            if status == IFSelect_RetDone:
-                print("\nSTEP exported successfully!")
-                print(OUTPUT_STEP)
-            else:
-                print("\nSTEP export failed!")
+if __name__ == "__main__":
+    main()
