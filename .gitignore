@@ -31,3 +31,4 @@ outputs/requests/
 local/
 
 backups/
+.env
