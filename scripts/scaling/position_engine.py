@@ -148,13 +148,9 @@ def get_bounds(shape):
 # Overlap
 # -------------------------------------------------
 
-# -------------------------------------------------
-# Overlap
-# -------------------------------------------------
-
 def get_overlap(
-    fixed_body,
-    moving_body,
+    reference_body,
+    attached_body,
     scale_info,
 ):
     """
@@ -162,9 +158,9 @@ def get_overlap(
     moving body remains attached to the scaled body.
     """
 
-    xmin1, ymin1, zmin1, xmax1, ymax1, zmax1 = get_bounds(fixed_body)
+    xmin1, ymin1, zmin1, xmax1, ymax1, zmax1 = get_bounds(reference_body)
 
-    xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = get_bounds(moving_body)
+    xmin2, ymin2, zmin2, xmax2, ymax2, zmax2 = get_bounds(attached_body)
 
     axis = scale_info["logical_axis"]
 

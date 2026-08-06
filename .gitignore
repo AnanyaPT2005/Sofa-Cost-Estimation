@@ -7,7 +7,7 @@ _init_.py
 # Virtual environment
 venv/
 .env/
-
+.env
 # Models
 models/
 models_cad/
