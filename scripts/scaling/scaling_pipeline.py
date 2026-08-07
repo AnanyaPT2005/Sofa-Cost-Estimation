@@ -19,21 +19,16 @@ from position_engine import (
 )
 
 SCALING_RULES = {
-    "seat": {
-        "length": True,
-        "width": True,
-        "height": True,
-    },
-    "armrest": {
-        "length": False,
-        "width": True,
-        "height": True,
-    },
-    "backrest": {
-        "length": True,
-        "width": False,
-        "height": True,
-    },
+    "length": [
+        "seat",
+    ],
+    "width": [
+        "seat",
+        "armrest",
+    ],
+    "height": [
+        "backrest",
+    ],
 }
 
 def process_dimension(
@@ -45,6 +40,7 @@ def process_dimension(
     reference_category="seat",
 ):       
     processed_solids = []
+    scaled_reference_bodies = {}
 
     all_bodies = []
 
@@ -73,6 +69,10 @@ def process_dimension(
         #     body_name,
         #     obb,
         # )
+        print(f"\n{body_name}")
+        print("X:", obb.XDirection().X(), obb.XDirection().Y(), obb.XDirection().Z())
+        print("Y:", obb.YDirection().X(), obb.YDirection().Y(), obb.YDirection().Z())
+        print("Z:", obb.ZDirection().X(), obb.ZDirection().Y(), obb.ZDirection().Z())
 
         # -----------------------------
         # Scale Seat
@@ -88,10 +88,13 @@ def process_dimension(
                 factor=factor,
             )
 
-            # Keep the first body as the reference
+            scaled_reference_bodies[body_name] = solid
+
             if reference_shape is None:
                 reference_shape = solid
                 reference_scale_info = scale_info
+
+
         all_bodies.append(
             {
                 "name": body_name,
@@ -126,7 +129,7 @@ def process_dimension(
 
     for body in all_bodies:
 
-        if body["name"] == "seat":
+        if body["name"] in metadata[reference_category]:
             continue
 
         vec = vector_between(
@@ -238,7 +241,7 @@ def process_dimension(
 
         if body_name in metadata[reference_category]:
 
-            processed_solids[i] = reference_shape
+            processed_solids[i] = scaled_reference_bodies[body_name]
 
         else:
 

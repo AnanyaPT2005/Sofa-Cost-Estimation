@@ -9,6 +9,7 @@ from OCP.gp import (
     
 )
 
+from bbox_engine import compute_obb
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_GTransform,
    
@@ -21,7 +22,18 @@ BODY_AXIS_MAP = {
         "width": "Y",
         "height": "X",
     },
+    "armrest": {
+        "length": "Z",
+        "width": "Y",
+        "height": "X",
+    },
+    "backrest": {
+        "length": "Z",
+        "width": "Y",
+        "height": "X",
+    },
 }
+
 def get_logical_dimension(
     body_name,
     obb_axis,
@@ -366,6 +378,78 @@ def get_body_dimensions(
     }
 
     mapping = BODY_AXIS_MAP[body_name]
+
+    dimensions = {}
+
+    for logical_dimension, obb_axis in mapping.items():
+
+        dimensions[logical_dimension] = axis_sizes[obb_axis]
+
+    return dimensions
+
+from bbox_engine import compute_bbox
+from OCP.gp import gp_Vec
+
+def get_category_dimensions(
+    category,
+    metadata,
+    solids,
+    body_names,
+    template_frame,
+):
+
+    mins = {
+        "X": float("inf"),
+        "Y": float("inf"),
+        "Z": float("inf"),
+    }
+
+    maxs = {
+        "X": float("-inf"),
+        "Y": float("-inf"),
+        "Z": float("-inf"),
+    }
+
+    for solid, body_name in zip(solids, body_names):
+
+        if body_name not in metadata[category]:
+            continue
+
+        obb = compute_obb(solid)
+
+        center = obb.Center()
+
+        centers = {
+            "X": center.X(),
+            "Y": center.Y(),
+            "Z": center.Z(),
+        }
+
+        half_sizes = {
+            "X": obb.XHSize(),
+            "Y": obb.YHSize(),
+            "Z": obb.ZHSize(),
+        }
+
+        for axis_name in ["X", "Y", "Z"]:
+
+            mins[axis_name] = min(
+                mins[axis_name],
+                centers[axis_name] - half_sizes[axis_name],
+            )
+
+            maxs[axis_name] = max(
+                maxs[axis_name],
+                centers[axis_name] + half_sizes[axis_name],
+            )
+
+    axis_sizes = {
+        "X": maxs["X"] - mins["X"],
+        "Y": maxs["Y"] - mins["Y"],
+        "Z": maxs["Z"] - mins["Z"],
+    }
+
+    mapping = BODY_AXIS_MAP[category]
 
     dimensions = {}
 

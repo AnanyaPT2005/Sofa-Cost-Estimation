@@ -10,9 +10,15 @@ from body_extractor import extract_solids
 from scaling_pipeline import process_dimension
 from step_reader import load_metadata
 from scale_step import (
+    get_category_dimensions,
     scale_body,
     get_logical_dimension,
     get_body_dimensions,
+)
+from step_reader import (
+    read_step,
+    load_metadata,
+    get_template_frame,
 )
 from bbox_engine import (
     compute_bbox,
@@ -41,6 +47,12 @@ load_dotenv()
 STEP_FILE = os.getenv("STEP_FILE")
 OUTPUT_STEP = os.getenv("OUTPUT_STEP")
 metadata = load_metadata(os.getenv("METADATA_FILE"))
+
+SCALING_RULES = {
+    "length": ["seat"],
+    "width": ["seat", "armrest"],
+    "height": ["backrest"],
+}
 def main():
 
     body_names = get_step_body_names(STEP_FILE)
@@ -55,6 +67,7 @@ def main():
     shape = get_reference_shape(shape_tool)
 
     solids = extract_solids(shape)
+    
 
     # ---------------------------------------
     # Find seat category
@@ -69,6 +82,23 @@ def main():
             break
 
     seat_obb = compute_obb(seat_shape)
+    template_frame = get_template_frame(
+        seat_shape,
+    )
+    for category in metadata:
+
+        dimensions = get_category_dimensions(
+            category,
+            metadata,
+            solids,
+            body_names,
+            template_frame,
+        )
+
+        print(f"\n{category.upper()}")
+
+        for k, v in dimensions.items():
+            print(f"{k}: {v:.2f}")
 
     seat_dimensions = get_body_dimensions(
         "seat",
@@ -97,30 +127,48 @@ def main():
     print(f"Width  : {width_factor:.3f}")
     print(f"Height : {height_factor:.3f}")
 
-    processed_solids = process_dimension(
-        solids=solids,
-        body_names=body_names,
-        logical_dimension="length",
-        factor=length_factor,
-        reference_category="seat",
-        metadata=metadata,
-    )
-    processed_solids = process_dimension(
-        solids=processed_solids,
-        body_names=body_names,
-        logical_dimension="width",
-        factor=width_factor,
-        metadata=metadata,
-        reference_category="seat",
-    )
-    processed_solids = process_dimension(
-        solids=processed_solids,
-        body_names=body_names,
-        logical_dimension="height",
-        factor=height_factor,
-        metadata=metadata,
-        reference_category="seat",
-    )
+    processed_solids = solids
+
+    factors = {
+        "length": length_factor,
+        "width": width_factor,
+        "height": height_factor,
+    }
+
+    for logical_dimension in [
+        "length",
+        "width",
+        "height",
+    ]:
+
+        for category in SCALING_RULES[logical_dimension]:
+            targets = {
+                "length": target_length,
+                "width": target_width,
+                "height": target_height,
+            }
+            category_dimensions = get_category_dimensions(
+                category,
+                metadata,
+                processed_solids,
+                body_names,
+                template_frame,
+            )
+
+            factor = (
+                targets[logical_dimension]
+                /
+                category_dimensions[logical_dimension]
+            )
+
+            processed_solids = process_dimension(
+                solids=processed_solids,
+                body_names=body_names,
+                logical_dimension=logical_dimension,
+                factor=factor,
+                reference_category=category,
+                metadata=metadata,
+            )
 
     # ----------------------------------------------------
     # Export STEP
