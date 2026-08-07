@@ -24,7 +24,7 @@ def compute_obb(solid):
     of a solid.
     """
 
-    print("\nComputing Oriented Bounding Box...")
+    
 
     obb = Bnd_OBB()
 
@@ -36,7 +36,6 @@ def compute_obb(solid):
         True,   # shape tolerance
     )
 
-    print("OBB computed.")
 
     return obb
 

@@ -19,6 +19,7 @@ from step_reader import (
     read_step,
     load_metadata,
     get_template_frame,
+    get_assembly_dimensions,
 )
 from bbox_engine import (
     compute_bbox,
@@ -44,9 +45,9 @@ from position_engine import (
 from export_step import export_step
 
 load_dotenv()
-STEP_FILE = os.getenv("STEP_FILE")
-OUTPUT_STEP = os.getenv("OUTPUT_STEP")
-metadata = load_metadata(os.getenv("METADATA_FILE"))
+# STEP_FILE = os.getenv("STEP_FILE")
+# OUTPUT_STEP = os.getenv("OUTPUT_STEP")
+# metadata = load_metadata(os.getenv("METADATA_FILE"))
 
 SCALING_RULES = {
     "length": ["seat"],
@@ -67,6 +68,14 @@ def main():
     shape = get_reference_shape(shape_tool)
 
     solids = extract_solids(shape)
+    assembly_dimensions = get_assembly_dimensions(
+        solids,
+    )
+
+    print("\nCurrent Assembly Dimensions")
+
+    for k, v in assembly_dimensions.items():
+        print(f"{k}: {v:.2f}")
     
 
     # ---------------------------------------
@@ -118,7 +127,20 @@ def main():
     target_width = float(input("Target Width (mm): "))
     target_height = float(input("Target Height (mm): "))
 
-    length_factor = target_length / seat_dimensions["length"]
+    remaining = (
+        target_length
+        - assembly_dimensions["length"]
+    )
+
+    target_seat_length = (
+        seat_dimensions["length"]
+        + remaining
+    )
+
+    length_factor = (
+        target_seat_length
+        / seat_dimensions["length"]
+    )
     width_factor = target_width / seat_dimensions["width"]
     height_factor = target_height / seat_dimensions["height"]
 
@@ -155,11 +177,14 @@ def main():
                 template_frame,
             )
 
-            factor = (
-                targets[logical_dimension]
-                /
-                category_dimensions[logical_dimension]
-            )
+            if logical_dimension == "length" and category == "seat":
+                factor = length_factor
+            else:
+                factor = (
+                    targets[logical_dimension]
+                    /
+                    category_dimensions[logical_dimension]
+                )
 
             processed_solids = process_dimension(
                 solids=processed_solids,
@@ -169,6 +194,13 @@ def main():
                 reference_category=category,
                 metadata=metadata,
             )
+
+            new_dimensions = get_assembly_dimensions(
+                processed_solids,
+            )
+
+            print("\nAfter Seat Scaling")
+            print(f"Global Length : {new_dimensions['length']:.2f}")
 
     # ----------------------------------------------------
     # Export STEP

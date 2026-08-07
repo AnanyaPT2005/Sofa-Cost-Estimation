@@ -1,4 +1,3 @@
-print("Loading scale_step.py")
 from OCP.gp import (
     gp_Ax3,
     gp_Pnt,
