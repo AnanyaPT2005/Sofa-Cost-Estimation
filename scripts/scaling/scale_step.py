@@ -345,3 +345,32 @@ def scale_body(
 
 
     return scaled, scale_info
+
+# -------------------------------------------------
+# Body Dimensions
+# -------------------------------------------------
+
+def get_body_dimensions(
+    body_name,
+    obb,
+):
+    """
+    Returns the logical dimensions of a body
+    using its OBB.
+    """
+
+    axis_sizes = {
+        "X": 2 * obb.XHSize(),
+        "Y": 2 * obb.YHSize(),
+        "Z": 2 * obb.ZHSize(),
+    }
+
+    mapping = BODY_AXIS_MAP[body_name]
+
+    dimensions = {}
+
+    for logical_dimension, obb_axis in mapping.items():
+
+        dimensions[logical_dimension] = axis_sizes[obb_axis]
+
+    return dimensions

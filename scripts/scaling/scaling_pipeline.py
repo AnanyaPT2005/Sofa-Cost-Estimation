@@ -80,15 +80,18 @@ def process_dimension(
 
         if body_name in metadata[reference_category]:
 
-            solid, reference_scale_info = scale_body(
+            solid, scale_info = scale_body(
                 solid=solid,
                 obb=obb,
-                body_name="seat",
+                body_name=reference_category,
                 logical_dimension=logical_dimension,
                 factor=factor,
             )
 
-            reference_shape = solid
+            # Keep the first body as the reference
+            if reference_shape is None:
+                reference_shape = solid
+                reference_scale_info = scale_info
         all_bodies.append(
             {
                 "name": body_name,
