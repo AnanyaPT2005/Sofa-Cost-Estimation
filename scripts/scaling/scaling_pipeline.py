@@ -18,12 +18,31 @@ from position_engine import (
     classify_attachment,
 )
 
+SCALING_RULES = {
+    "seat": {
+        "length": True,
+        "width": True,
+        "height": True,
+    },
+    "armrest": {
+        "length": False,
+        "width": True,
+        "height": True,
+    },
+    "backrest": {
+        "length": True,
+        "width": False,
+        "height": True,
+    },
+}
+
 def process_dimension(
     solids,
     body_names,
     logical_dimension,
     factor,
-    reference_body="seat",
+    metadata,
+    reference_category="seat",
 ):       
     processed_solids = []
 
@@ -59,7 +78,7 @@ def process_dimension(
         # Scale Seat
         # -----------------------------
 
-        if body_name == "seat":
+        if body_name in metadata[reference_category]:
 
             solid, reference_scale_info = scale_body(
                 solid=solid,
@@ -134,7 +153,7 @@ def process_dimension(
         )
 
         logical = get_logical_dimension(
-            reference_body,
+            reference_category,
             axis,
         )
 
@@ -214,7 +233,7 @@ def process_dimension(
 
     for i, body_name in enumerate(body_names):
 
-        if body_name == "seat":
+        if body_name in metadata[reference_category]:
 
             processed_solids[i] = reference_shape
 

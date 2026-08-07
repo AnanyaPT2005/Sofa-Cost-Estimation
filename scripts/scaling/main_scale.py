@@ -8,6 +8,7 @@ from step_reader import read_step
 from assembly_parser import get_reference_shape
 from body_extractor import extract_solids
 from scaling_pipeline import process_dimension
+from step_reader import load_metadata, METADATA_FILE
 from bbox_engine import (
     compute_bbox,
     compute_obb,
@@ -34,7 +35,7 @@ from export_step import export_step
 load_dotenv()
 STEP_FILE = os.getenv("STEP_FILE")
 OUTPUT_STEP = os.getenv("OUTPUT_STEP")
-
+metadata = load_metadata(METADATA_FILE)
 def main():
 
     body_names = get_step_body_names(STEP_FILE)
@@ -56,6 +57,7 @@ def main():
         logical_dimension="length",
         factor=0.5,
         reference_body="seat",
+        metadata=metadata,
     )
 
     # ----------------------------------------------------

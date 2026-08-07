@@ -32,3 +32,4 @@ local/
 scripts/scaling/scaled_step.step
 
 backups/
+.env
