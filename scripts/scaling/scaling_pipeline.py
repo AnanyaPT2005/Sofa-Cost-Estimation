@@ -3,7 +3,7 @@ from bbox_engine import (
     compute_obb,
     print_bbox,
 )
-
+from step_reader import get_category_bounds
 from scale_step import (
     scale_body,
     get_logical_dimension,
@@ -39,7 +39,13 @@ def process_dimension(
     factor,
     metadata,
     reference_category="seat",
-):       
+):
+    old_reference_bounds = get_category_bounds(
+        reference_category,
+        metadata,
+        solids,
+        body_names,
+    )       
     processed_solids = []
     scaled_reference_bodies = {}
 
@@ -102,6 +108,27 @@ def process_dimension(
         )
 
         processed_solids.append(solid)
+    new_reference_bounds = get_category_bounds(
+        reference_category,
+        metadata,
+        processed_solids,
+        body_names,
+    )
+
+    # -----------------------------------------
+    # Calculate ACTUAL growth
+    # -----------------------------------------
+
+    old_xmin, old_ymin, old_zmin, old_xmax, old_ymax, old_zmax = old_reference_bounds
+
+    new_xmin, new_ymin, new_zmin, new_xmax, new_ymax, new_zmax = new_reference_bounds
+
+
+    growth = {
+        "length": (new_xmax - new_xmin) - (old_xmax - old_xmin),
+        "width":  (new_zmax - new_zmin) - (old_zmax - old_zmin),
+        "height": (new_ymax - new_ymin) - (old_ymax - old_ymin),
+    }
 
     # print("\nOverlap :", overlap)
     reference_shape = make_compound(reference_shapes)
@@ -162,15 +189,15 @@ def process_dimension(
             }
         )
 
-    print("\nAttachment Map")
+    # print("\nAttachment Map")
 
-    for item in attachment_map:
+    # for item in attachment_map:
 
-        print(
-            item["name"],
-            "->",
-            item["attachment"],
-        )
+    #     print(
+    #         item["name"],
+    #         "->",
+    #         item["attachment"],
+    #     )
 
     # ----------------------------------------------------
     # Move attached bodies
@@ -204,11 +231,11 @@ def process_dimension(
                 overlap,
             )
 
-            print(
-                item["name"],
-                "moved",
-                attachment,
-            )
+            # print(
+            #     item["name"],
+            #     "moved",
+            #     attachment,
+            # )
 
         elif sign == "-":
 
@@ -218,11 +245,11 @@ def process_dimension(
                 -overlap,
             )
 
-            print(
-                item["name"],
-                "moved",
-                attachment,
-            )
+            # print(
+            #     item["name"],
+            #     "moved",
+            #     attachment,
+            # )
 
     # ----------------------------------------------------
     # Replace moved bodies

@@ -257,3 +257,35 @@ def print_global_length_bounds(solids, body_names):
         f"{xmax_global - xmin_global:.2f}"
     )
 
+def get_category_bounds(
+    category,
+    metadata,
+    solids,
+    body_names,
+):
+    """
+    Returns the global AABB of all bodies in a category.
+    """
+
+    box = Bnd_Box()
+
+    found = False
+
+    for solid, body_name in zip(solids, body_names):
+
+        if body_name not in metadata[category]:
+            continue
+
+        BRepBndLib.Add_s(
+            solid,
+            box,
+        )
+
+        found = True
+
+    if not found:
+        raise ValueError(
+            f"No bodies found for category '{category}'"
+        )
+
+    return box.Get()

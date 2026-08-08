@@ -217,9 +217,9 @@ def move_body(
         True,
     )
 
-    print(
-        f"Moved body by ({dx:.2f}, {dy:.2f}, {dz:.2f})"
-    )
+    # print(
+    #     f"Moved body by ({dx:.2f}, {dy:.2f}, {dz:.2f})"
+    # )
 
     return transformer.Shape()
 
