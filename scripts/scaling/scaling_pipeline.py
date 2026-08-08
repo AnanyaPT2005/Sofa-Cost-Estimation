@@ -76,26 +76,6 @@ def process_dimension(
         # print("Y:", obb.YDirection().X(), obb.YDirection().Y(), obb.YDirection().Z())
         # print("Z:", obb.ZDirection().X(), obb.ZDirection().Y(), obb.ZDirection().Z())
 
-        # -----------------------------
-        # Scale Seat
-        # -----------------------------
-        #VER 1
-        # if body_name in metadata[reference_category]:
-
-        #     solid, scale_info = scale_body(
-        #         solid=solid,
-        #         obb=obb,
-        #         body_name=reference_category,
-        #         logical_dimension=logical_dimension,
-        #         factor=factor,
-        #     )
-
-        #     scaled_reference_bodies[body_name] = solid
-
-        #     if reference_shape is None:
-        #         reference_shape = solid
-        #         reference_scale_info = scale_info
-
         if body_name in metadata[reference_category]:
 
             solid, scale_info = scale_body(
@@ -122,15 +102,6 @@ def process_dimension(
         )
 
         processed_solids.append(solid)
-        # ----------------------------------------------------
-    # Compute overlap using right arm
-    # ----------------------------------------------------
-
-    # overlap = get_overlap(
-    #     reference_shape,
-    #     right_arm,
-    #     seat_scale_info,
-    # )
 
     # print("\nOverlap :", overlap)
     reference_shape = make_compound(reference_shapes)
@@ -179,7 +150,7 @@ def process_dimension(
         )
 
         logical = get_logical_dimension(
-            reference_category,
+            compute_obb(body["shape"]),
             axis,
         )
 

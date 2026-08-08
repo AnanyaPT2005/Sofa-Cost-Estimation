@@ -10,16 +10,18 @@ from body_extractor import extract_solids
 from scaling_pipeline import process_dimension
 from step_reader import load_metadata
 from scale_step import (
-    get_category_dimensions,
     scale_body,
     get_logical_dimension,
-    get_body_dimensions,
 )
 from step_reader import (
     read_step,
     load_metadata,
     get_template_frame,
     get_assembly_dimensions,
+    get_body_dimensions,
+    get_category_dimensions,
+    get_body_axis_map,
+    print_global_length_bounds
 )
 from bbox_engine import (
     compute_bbox,
@@ -29,11 +31,8 @@ from bbox_engine import (
 )
 
 from scale_step import (
-    get_category_dimensions,
     scale_body,
     get_logical_dimension,
-    get_body_dimensions,
-    get_body_axis_map,
 )
 
 from position_engine import (
@@ -244,7 +243,10 @@ def main():
                     /
                     category_dimensions[logical_dimension]
                 )
-
+            print_global_length_bounds(
+                processed_solids,
+                body_names,
+            )
             processed_solids = process_dimension(
                 solids=processed_solids,
                 body_names=body_names,
@@ -253,6 +255,11 @@ def main():
                 reference_category=category,
                 metadata=metadata,
             )
+            print_global_length_bounds(
+                processed_solids,
+                body_names,
+            )
+            
 
             new_dimensions = get_assembly_dimensions(
                 processed_solids,

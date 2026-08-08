@@ -7,41 +7,19 @@ from OCP.gp import (
     gp_XYZ,
     
 )
-
+from step_reader import get_body_axis_map
 from bbox_engine import compute_obb
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_GTransform,
    
 )
 
-
-BODY_AXIS_MAP = {
-    "seat": {
-        "length": "Y",
-        "width": "Z",
-        "height": "X",
-    },
-    "armrest": {
-        "length": "Y",
-        "width": "Z",
-        "height": "X",
-    },
-    "backrest": {
-        "length": "Y",
-        "width": "Z",
-        "height": "X",
-    },
-}
-
-def get_logical_dimension(
-    body_name,
-    obb_axis,
-):
+def get_logical_dimension(obb, obb_axis):
     """
-    Convert OBB axis back to logical dimension.
+    Convert an OBB axis to its logical dimension.
     """
 
-    mapping = BODY_AXIS_MAP[body_name]
+    mapping = get_body_axis_map(obb)
 
     for logical, axis in mapping.items():
 
@@ -49,15 +27,6 @@ def get_logical_dimension(
             return logical
 
     return None
-
-
-# -------------------------------------------------
-# Fusion 360 Orientation Correction
-# -------------------------------------------------
-
-
-
-
 
 # -------------------------------------------------
 # Build OBB Coordinate System
@@ -274,10 +243,6 @@ def scale_body(
     # -----------------------------------------
     # OBB scaling
     # -----------------------------------------
-
-   
-
-
     R, R_inv = build_rotation_matrix(
         obb
     )
@@ -287,21 +252,15 @@ def scale_body(
     obb_axis,
     factor,
 )
-
-
     FINAL = build_final_matrix(
         R,
         R_inv,
         S,
     )
-
-
     tx, ty, tz = compute_translation(
         obb.Center(),
         FINAL,
     )
-
-
     scaled = apply_transform(
         solid,
         FINAL,
@@ -353,169 +312,5 @@ def scale_body(
 
     # OBB itself (needed later)
     "obb": obb,
-}
-
-
+    }
     return scaled, scale_info
-
-# -------------------------------------------------
-# Body Dimensions
-# -------------------------------------------------
-
-def get_body_dimensions(
-    category,
-    metadata,
-    solids,
-    body_names,
-):
-    """
-    Returns the logical OBB dimensions
-    of every body belonging to a category.
-    """
-
-    dimensions = {}
-
-    for solid, body_name in zip(solids, body_names):
-
-        if body_name not in metadata[category]:
-            continue
-
-        obb = compute_obb(solid)
-
-        axis_sizes = {
-            "X": 2 * obb.XHSize(),
-            "Y": 2 * obb.YHSize(),
-            "Z": 2 * obb.ZHSize(),
-        }
-
-        mapping = get_body_axis_map(obb)
-
-        body_dimensions = {}
-
-        for logical_dimension, obb_axis in mapping.items():
-
-            body_dimensions[logical_dimension] = axis_sizes[obb_axis]
-
-        dimensions[body_name] = body_dimensions
-
-    return dimensions
-
-from bbox_engine import compute_bbox
-from OCP.gp import gp_Vec
-def get_category_dimensions(
-    category,
-    metadata,
-    solids,
-    body_names,
-    template_frame=None,
-):
-    """
-    Compute the enclosing bounding box of all bodies
-    belonging to a category.
-
-    For the current company STEP model:
-        X -> logical length
-        Z -> logical width
-        Y -> logical height
-    """
-
-    xmin = float("inf")
-    ymin = float("inf")
-    zmin = float("inf")
-
-    xmax = float("-inf")
-    ymax = float("-inf")
-    zmax = float("-inf")
-
-    found = False
-
-    for solid, body_name in zip(solids, body_names):
-
-        if body_name not in metadata[category]:
-            continue
-
-        found = True
-
-        box = compute_bbox(solid)
-
-        bxmin, bymin, bzmin, bxmax, bymax, bzmax = box.Get()
-
-        xmin = min(xmin, bxmin)
-        ymin = min(ymin, bymin)
-        zmin = min(zmin, bzmin)
-
-        xmax = max(xmax, bxmax)
-        ymax = max(ymax, bymax)
-        zmax = max(zmax, bzmax)
-
-    if not found:
-        raise ValueError(
-            f"No bodies found for category '{category}'"
-        )
-
-    # -----------------------------------------
-    # Logical dimensions for company STEP model
-    # -----------------------------------------
-
-    dimensions = {
-        "length": xmax - xmin,   # X
-        "width":  zmax - zmin,   # Z
-        "height": ymax - ymin,   # Y
-    }
-
-    return dimensions
-
-def get_body_axis_map(obb):
-    """
-    Determine which OBB axis corresponds to each global logical axis.
-
-    Global coordinate convention:
-        X -> length
-        Z -> width
-        Y -> height
-    """
-
-    obb_axes = {
-        "X": obb.XDirection(),
-        "Y": obb.YDirection(),
-        "Z": obb.ZDirection(),
-    }
-
-    global_axes = {
-        "length": (1, 0, 0),   # global X
-        "width":  (0, 0, 1),   # global Z
-        "height": (0, 1, 0),   # global Y
-    }
-
-    mapping = {}
-
-    used_obb_axes = set()
-
-    for logical_dimension, global_axis in global_axes.items():
-
-        best_axis = None
-        best_score = -1
-
-        for obb_axis_name, direction in obb_axes.items():
-
-            if obb_axis_name in used_obb_axes:
-                continue
-
-            dx = direction.X()
-            dy = direction.Y()
-            dz = direction.Z()
-
-            score = abs(
-                dx * global_axis[0]
-                + dy * global_axis[1]
-                + dz * global_axis[2]
-            )
-
-            if score > best_score:
-                best_score = score
-                best_axis = obb_axis_name
-
-        mapping[logical_dimension] = best_axis
-        used_obb_axes.add(best_axis)
-
-    return mapping
