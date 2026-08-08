@@ -360,54 +360,44 @@ def scale_body(
 # -------------------------------------------------
 # Body Dimensions
 # -------------------------------------------------
+#VERSION 1
+# def get_body_dimensions(
+#     body_name,
+#     obb,
+# ):
+#     """
+#     Returns the logical dimensions of a body
+#     using its OBB.
+#     """
+
+#     axis_sizes = {
+#         "X": 2 * obb.XHSize(),
+#         "Y": 2 * obb.YHSize(),
+#         "Z": 2 * obb.ZHSize(),
+#     }
+
+#     mapping = BODY_AXIS_MAP[body_name]
+
+#     dimensions = {}
+
+#     for logical_dimension, obb_axis in mapping.items():
+
+#         dimensions[logical_dimension] = axis_sizes[obb_axis]
+
+#     return dimensions
 
 def get_body_dimensions(
-    body_name,
-    obb,
-):
-    """
-    Returns the logical dimensions of a body
-    using its OBB.
-    """
-
-    axis_sizes = {
-        "X": 2 * obb.XHSize(),
-        "Y": 2 * obb.YHSize(),
-        "Z": 2 * obb.ZHSize(),
-    }
-
-    mapping = BODY_AXIS_MAP[body_name]
-
-    dimensions = {}
-
-    for logical_dimension, obb_axis in mapping.items():
-
-        dimensions[logical_dimension] = axis_sizes[obb_axis]
-
-    return dimensions
-
-from bbox_engine import compute_bbox
-from OCP.gp import gp_Vec
-
-def get_category_dimensions(
     category,
     metadata,
     solids,
     body_names,
-    template_frame,
 ):
+    """
+    Returns the logical OBB dimensions
+    of every body belonging to a category.
+    """
 
-    mins = {
-        "X": float("inf"),
-        "Y": float("inf"),
-        "Z": float("inf"),
-    }
-
-    maxs = {
-        "X": float("-inf"),
-        "Y": float("-inf"),
-        "Z": float("-inf"),
-    }
+    dimensions = {}
 
     for solid, body_name in zip(solids, body_names):
 
@@ -416,44 +406,85 @@ def get_category_dimensions(
 
         obb = compute_obb(solid)
 
-        center = obb.Center()
-
-        centers = {
-            "X": center.X(),
-            "Y": center.Y(),
-            "Z": center.Z(),
+        axis_sizes = {
+            "X": 2 * obb.XHSize(),
+            "Y": 2 * obb.YHSize(),
+            "Z": 2 * obb.ZHSize(),
         }
 
-        half_sizes = {
-            "X": obb.XHSize(),
-            "Y": obb.YHSize(),
-            "Z": obb.ZHSize(),
-        }
+        mapping = BODY_AXIS_MAP[category]
 
-        for axis_name in ["X", "Y", "Z"]:
+        body_dimensions = {}
 
-            mins[axis_name] = min(
-                mins[axis_name],
-                centers[axis_name] - half_sizes[axis_name],
-            )
+        for logical_dimension, obb_axis in mapping.items():
 
-            maxs[axis_name] = max(
-                maxs[axis_name],
-                centers[axis_name] + half_sizes[axis_name],
-            )
+            body_dimensions[logical_dimension] = axis_sizes[obb_axis]
 
-    axis_sizes = {
-        "X": maxs["X"] - mins["X"],
-        "Y": maxs["Y"] - mins["Y"],
-        "Z": maxs["Z"] - mins["Z"],
+        dimensions[body_name] = body_dimensions
+
+    return dimensions
+
+from bbox_engine import compute_bbox
+from OCP.gp import gp_Vec
+def get_category_dimensions(
+    category,
+    metadata,
+    solids,
+    body_names,
+    template_frame=None,
+):
+    """
+    Compute the enclosing bounding box of all bodies
+    belonging to a category.
+
+    For the current company STEP model:
+        X -> logical length
+        Z -> logical width
+        Y -> logical height
+    """
+
+    xmin = float("inf")
+    ymin = float("inf")
+    zmin = float("inf")
+
+    xmax = float("-inf")
+    ymax = float("-inf")
+    zmax = float("-inf")
+
+    found = False
+
+    for solid, body_name in zip(solids, body_names):
+
+        if body_name not in metadata[category]:
+            continue
+
+        found = True
+
+        box = compute_bbox(solid)
+
+        bxmin, bymin, bzmin, bxmax, bymax, bzmax = box.Get()
+
+        xmin = min(xmin, bxmin)
+        ymin = min(ymin, bymin)
+        zmin = min(zmin, bzmin)
+
+        xmax = max(xmax, bxmax)
+        ymax = max(ymax, bymax)
+        zmax = max(zmax, bzmax)
+
+    if not found:
+        raise ValueError(
+            f"No bodies found for category '{category}'"
+        )
+
+    # -----------------------------------------
+    # Logical dimensions for company STEP model
+    # -----------------------------------------
+
+    dimensions = {
+        "length": xmax - xmin,   # X
+        "width":  zmax - zmin,   # Z
+        "height": ymax - ymin,   # Y
     }
-
-    mapping = BODY_AXIS_MAP[category]
-
-    dimensions = {}
-
-    for logical_dimension, obb_axis in mapping.items():
-
-        dimensions[logical_dimension] = axis_sizes[obb_axis]
 
     return dimensions

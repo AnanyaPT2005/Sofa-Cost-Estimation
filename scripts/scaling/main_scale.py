@@ -45,10 +45,11 @@ from position_engine import (
 from export_step import export_step
 
 load_dotenv()
-# STEP_FILE = os.getenv("STEP_FILE")
-# OUTPUT_STEP = os.getenv("OUTPUT_STEP")
-# metadata = load_metadata(os.getenv("METADATA_FILE"))
-
+STEP_FILE = r"G:\My Drive\sofa cost estimation\sofa 3d models\master sofa test hollow.step"
+OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
+metadata = load_metadata(r"G:\My Drive\sofa cost estimation\scripts\scaling\master_sofa_metadata.json")
+print(type(metadata))
+print(metadata)
 SCALING_RULES = {
     "length": ["seat"],
     "width": ["seat", "armrest"],
@@ -58,10 +59,10 @@ def main():
 
     body_names = get_step_body_names(STEP_FILE)
 
-    print("\nBodies found:")
+    # print("\nBodies found:")
 
-    for i, name in enumerate(body_names, start=1):
-        print(f"{i}. {name}")
+    # for i, name in enumerate(body_names, start=1):
+    #     print(f"{i}. {name}")
 
     shape_tool = read_step(STEP_FILE)
 
@@ -109,15 +110,29 @@ def main():
         for k, v in dimensions.items():
             print(f"{k}: {v:.2f}")
 
-    seat_dimensions = get_body_dimensions(
+    seat_body_dimensions = get_body_dimensions(
         "seat",
-        seat_obb,
+        metadata,
+        solids,
+        body_names,
     )
 
-    print("\nCurrent Seat Dimensions")
+    print("\nSeat Body Dimensions")
 
-    for k, v in seat_dimensions.items():
-        print(f"{k}: {v:.2f}")
+    for body_name, dimensions in seat_body_dimensions.items():
+
+        print(f"\n{body_name}")
+
+        for dimension, value in dimensions.items():
+            print(f"{dimension}: {value:.2f}")
+    
+    seat_dimensions = get_category_dimensions(
+    "seat",
+    metadata,
+    solids,
+    body_names,
+    template_frame,
+)
 
     # ---------------------------------------
     # User input

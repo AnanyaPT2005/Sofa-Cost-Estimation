@@ -1,5 +1,8 @@
+
 from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
 from OCP.BRepBndLib import BRepBndLib
+from OCP.BRep import BRep_Builder
+from OCP.TopoDS import TopoDS_Compound
 from OCP.Bnd import Bnd_Box, Bnd_OBB
 from OCP.gp import (
     gp_Trsf,
@@ -214,8 +217,22 @@ def move_body(
         True,
     )
 
-    print(
-        f"Moved body by ({dx:.2f}, {dy:.2f}, {dz:.2f})"
-    )
+    # print(
+    #     f"Moved body by ({dx:.2f}, {dy:.2f}, {dz:.2f})"
+    # )
 
     return transformer.Shape()
+
+def make_compound(shapes):
+    """
+    Combines multiple shapes into one compound without fusing them.
+    """
+    compound = TopoDS_Compound()
+    builder = BRep_Builder()
+
+    builder.MakeCompound(compound)
+
+    for shape in shapes:
+        builder.Add(compound, shape)
+
+    return compound

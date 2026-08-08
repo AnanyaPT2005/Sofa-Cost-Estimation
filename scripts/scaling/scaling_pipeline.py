@@ -16,6 +16,7 @@ from position_engine import (
     get_obb,
     projection_on_axis,
     classify_attachment,
+    make_compound,
 )
 
 SCALING_RULES = {
@@ -44,6 +45,7 @@ def process_dimension(
 
     all_bodies = []
 
+    reference_shapes = []
     reference_shape = None
     reference_scale_info = None
 
@@ -69,14 +71,30 @@ def process_dimension(
         #     body_name,
         #     obb,
         # )
-        print(f"\n{body_name}")
-        print("X:", obb.XDirection().X(), obb.XDirection().Y(), obb.XDirection().Z())
-        print("Y:", obb.YDirection().X(), obb.YDirection().Y(), obb.YDirection().Z())
-        print("Z:", obb.ZDirection().X(), obb.ZDirection().Y(), obb.ZDirection().Z())
+        # print(f"\n{body_name}")
+        # print("X:", obb.XDirection().X(), obb.XDirection().Y(), obb.XDirection().Z())
+        # print("Y:", obb.YDirection().X(), obb.YDirection().Y(), obb.YDirection().Z())
+        # print("Z:", obb.ZDirection().X(), obb.ZDirection().Y(), obb.ZDirection().Z())
 
         # -----------------------------
         # Scale Seat
         # -----------------------------
+        #VER 1
+        # if body_name in metadata[reference_category]:
+
+        #     solid, scale_info = scale_body(
+        #         solid=solid,
+        #         obb=obb,
+        #         body_name=reference_category,
+        #         logical_dimension=logical_dimension,
+        #         factor=factor,
+        #     )
+
+        #     scaled_reference_bodies[body_name] = solid
+
+        #     if reference_shape is None:
+        #         reference_shape = solid
+        #         reference_scale_info = scale_info
 
         if body_name in metadata[reference_category]:
 
@@ -90,8 +108,9 @@ def process_dimension(
 
             scaled_reference_bodies[body_name] = solid
 
-            if reference_shape is None:
-                reference_shape = solid
+            reference_shapes.append(solid)
+
+            if reference_scale_info is None:
                 reference_scale_info = scale_info
 
 
@@ -114,6 +133,7 @@ def process_dimension(
     # )
 
     # print("\nOverlap :", overlap)
+    reference_shape = make_compound(reference_shapes)
 
     # ----------------------------------------------------
     # Build attachment map
@@ -171,15 +191,15 @@ def process_dimension(
             }
         )
 
-    print("\nAttachment Map")
+    # print("\nAttachment Map")
 
-    for item in attachment_map:
+    # for item in attachment_map:
 
-        print(
-            item["name"],
-            "->",
-            item["attachment"],
-        )
+        # print(
+        #     item["name"],
+        #     "->",
+        #     item["attachment"],
+        # )
 
     # ----------------------------------------------------
     # Move attached bodies
@@ -213,11 +233,11 @@ def process_dimension(
                 overlap,
             )
 
-            print(
-                item["name"],
-                "moved",
-                attachment,
-            )
+            # print(
+            #     item["name"],
+            #     "moved",
+            #     attachment,
+            # )
 
         elif sign == "-":
 
@@ -227,11 +247,11 @@ def process_dimension(
                 -overlap,
             )
 
-            print(
-                item["name"],
-                "moved",
-                attachment,
-            )
+            # print(
+            #     item["name"],
+            #     "moved",
+            #     attachment,
+            # )
 
     # ----------------------------------------------------
     # Replace moved bodies

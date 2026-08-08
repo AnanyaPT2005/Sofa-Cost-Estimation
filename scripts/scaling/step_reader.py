@@ -53,7 +53,7 @@ def get_assembly_dimensions(solids):
     xmin, ymin, zmin, xmax, ymax, zmax = box.Get()
 
     return {
-        "length": zmax - zmin,
-        "width": ymax - ymin,
-        "height": xmax - xmin,
+        "length": xmax - xmin,
+        "width": zmax - zmin,
+        "height": ymax - ymin,
     }
