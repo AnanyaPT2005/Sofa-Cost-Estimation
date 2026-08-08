@@ -254,6 +254,7 @@ def main():
                 factor=factor,
                 reference_category=category,
                 metadata=metadata,
+                target_length=target_length,
             )
             print_global_length_bounds(
                 processed_solids,

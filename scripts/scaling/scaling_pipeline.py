@@ -19,6 +19,7 @@ from position_engine import (
     projection_on_axis,
     classify_attachment,
     make_compound,
+    get_bounds,
 )
 
 SCALING_RULES = {
@@ -90,6 +91,7 @@ def process_dimension(
     logical_dimension,
     factor,
     metadata,
+    target_length=None,
     reference_category="seat",
 ):
     old_reference_bounds = get_category_bounds(
@@ -229,29 +231,41 @@ def process_dimension(
         and logical_dimension == "length"
     ):
 
-        half_growth = growth["length"] / 2
+        # Target outer bounds for the requested final length
+        target_half_length = target_length / 2
 
-        for item in attachment_map:
+        for item in all_bodies:
 
             side = get_armrest_side(item["name"])
 
+            if side is None:
+                continue
+
+            xmin, ymin, zmin, xmax, ymax, zmax = get_bounds(
+                item["shape"]
+            )
+
             if side == "left":
+
+                # Move left armrest so its OUTER edge reaches +target_half_length
+                distance = target_half_length - xmax
 
                 item["shape"] = move_body(
                     item["shape"],
                     gp_Vec(1, 0, 0),
-                    half_growth,
+                    distance,
                 )
 
             elif side == "right":
 
+                # Move right armrest so its OUTER edge reaches -target_half_length
+                distance = -target_half_length - xmin
+
                 item["shape"] = move_body(
                     item["shape"],
                     gp_Vec(1, 0, 0),
-                    -half_growth,
-                ) 
-
-                
+                    distance,
+                )   
             # print(
             #     item["name"],
             #     "moved",
@@ -270,7 +284,7 @@ def process_dimension(
 
         else:
 
-            for item in attachment_map:
+            for item in all_bodies:
 
                 if item["name"] == body_name:
 
