@@ -191,15 +191,15 @@ def process_dimension(
             }
         )
 
-    # print("\nAttachment Map")
+    print("\nAttachment Map")
 
-    # for item in attachment_map:
+    for item in attachment_map:
 
-        # print(
-        #     item["name"],
-        #     "->",
-        #     item["attachment"],
-        # )
+        print(
+            item["name"],
+            "->",
+            item["attachment"],
+        )
 
     # ----------------------------------------------------
     # Move attached bodies
@@ -233,11 +233,11 @@ def process_dimension(
                 overlap,
             )
 
-            # print(
-            #     item["name"],
-            #     "moved",
-            #     attachment,
-            # )
+            print(
+                item["name"],
+                "moved",
+                attachment,
+            )
 
         elif sign == "-":
 
@@ -247,11 +247,11 @@ def process_dimension(
                 -overlap,
             )
 
-            # print(
-            #     item["name"],
-            #     "moved",
-            #     attachment,
-            # )
+            print(
+                item["name"],
+                "moved",
+                attachment,
+            )
 
     # ----------------------------------------------------
     # Replace moved bodies

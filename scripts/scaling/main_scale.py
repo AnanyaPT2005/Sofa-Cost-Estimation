@@ -29,8 +29,11 @@ from bbox_engine import (
 )
 
 from scale_step import (
+    get_category_dimensions,
     scale_body,
     get_logical_dimension,
+    get_body_dimensions,
+    get_body_axis_map,
 )
 
 from position_engine import (
@@ -69,6 +72,47 @@ def main():
     shape = get_reference_shape(shape_tool)
 
     solids = extract_solids(shape)
+    print("\nSeat Body OBB Axes")
+
+    for solid, body_name in zip(solids, body_names):
+
+        if body_name in metadata["seat"]:
+
+            obb = compute_obb(solid)
+            axis_map = get_body_axis_map(obb)
+
+            print("Axis Mapping:")
+            print(axis_map)
+
+            print("OBB Sizes:")
+            print(
+                "X:", 2 * obb.XHSize(),
+                "Y:", 2 * obb.YHSize(),
+                "Z:", 2 * obb.ZHSize()
+            )
+
+            print(f"\n{body_name}")
+
+            print(
+                "X:",
+                obb.XDirection().X(),
+                obb.XDirection().Y(),
+                obb.XDirection().Z()
+            )
+
+            print(
+                "Y:",
+                obb.YDirection().X(),
+                obb.YDirection().Y(),
+                obb.YDirection().Z()
+            )
+
+            print(
+                "Z:",
+                obb.ZDirection().X(),
+                obb.ZDirection().Y(),
+                obb.ZDirection().Z()
+            )
     assembly_dimensions = get_assembly_dimensions(
         solids,
     )

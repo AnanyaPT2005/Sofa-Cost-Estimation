@@ -17,18 +17,18 @@ from OCP.BRepBuilderAPI import (
 
 BODY_AXIS_MAP = {
     "seat": {
-        "length": "Z",
-        "width": "Y",
+        "length": "Y",
+        "width": "Z",
         "height": "X",
     },
     "armrest": {
-        "length": "Z",
-        "width": "Y",
+        "length": "Y",
+        "width": "Z",
         "height": "X",
     },
     "backrest": {
-        "length": "Z",
-        "width": "Y",
+        "length": "Y",
+        "width": "Z",
         "height": "X",
     },
 }
@@ -261,7 +261,8 @@ def scale_body(
     logical_dimension,
     factor,
 ):
-    obb_axis = BODY_AXIS_MAP[body_name][logical_dimension]
+    axis_map = get_body_axis_map(obb)
+    obb_axis = axis_map[logical_dimension]
 
     # -----------------------------------------
     # Correct Fusion 360 orientation first
@@ -360,31 +361,6 @@ def scale_body(
 # -------------------------------------------------
 # Body Dimensions
 # -------------------------------------------------
-#VERSION 1
-# def get_body_dimensions(
-#     body_name,
-#     obb,
-# ):
-#     """
-#     Returns the logical dimensions of a body
-#     using its OBB.
-#     """
-
-#     axis_sizes = {
-#         "X": 2 * obb.XHSize(),
-#         "Y": 2 * obb.YHSize(),
-#         "Z": 2 * obb.ZHSize(),
-#     }
-
-#     mapping = BODY_AXIS_MAP[body_name]
-
-#     dimensions = {}
-
-#     for logical_dimension, obb_axis in mapping.items():
-
-#         dimensions[logical_dimension] = axis_sizes[obb_axis]
-
-#     return dimensions
 
 def get_body_dimensions(
     category,
@@ -412,7 +388,7 @@ def get_body_dimensions(
             "Z": 2 * obb.ZHSize(),
         }
 
-        mapping = BODY_AXIS_MAP[category]
+        mapping = get_body_axis_map(obb)
 
         body_dimensions = {}
 
@@ -488,3 +464,58 @@ def get_category_dimensions(
     }
 
     return dimensions
+
+def get_body_axis_map(obb):
+    """
+    Determine which OBB axis corresponds to each global logical axis.
+
+    Global coordinate convention:
+        X -> length
+        Z -> width
+        Y -> height
+    """
+
+    obb_axes = {
+        "X": obb.XDirection(),
+        "Y": obb.YDirection(),
+        "Z": obb.ZDirection(),
+    }
+
+    global_axes = {
+        "length": (1, 0, 0),   # global X
+        "width":  (0, 0, 1),   # global Z
+        "height": (0, 1, 0),   # global Y
+    }
+
+    mapping = {}
+
+    used_obb_axes = set()
+
+    for logical_dimension, global_axis in global_axes.items():
+
+        best_axis = None
+        best_score = -1
+
+        for obb_axis_name, direction in obb_axes.items():
+
+            if obb_axis_name in used_obb_axes:
+                continue
+
+            dx = direction.X()
+            dy = direction.Y()
+            dz = direction.Z()
+
+            score = abs(
+                dx * global_axis[0]
+                + dy * global_axis[1]
+                + dz * global_axis[2]
+            )
+
+            if score > best_score:
+                best_score = score
+                best_axis = obb_axis_name
+
+        mapping[logical_dimension] = best_axis
+        used_obb_axes.add(best_axis)
+
+    return mapping
