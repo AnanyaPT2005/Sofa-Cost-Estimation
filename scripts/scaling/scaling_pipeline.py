@@ -3,6 +3,8 @@ from bbox_engine import (
     compute_obb,
     print_bbox,
 )
+from OCP.gp import gp_Vec, gp_Pnt
+from OCP.gp import gp_Vec
 from step_reader import get_category_bounds
 from scale_step import (
     scale_body,
@@ -31,6 +33,56 @@ SCALING_RULES = {
         "backrest",
     ],
 }
+
+def get_armrest_side(body_name):
+
+    name = body_name.lower().replace(" ", "_")
+
+    if name.startswith("left_armrest"):
+        return "left"
+
+    if name.startswith("right_armrest"):
+        return "right"
+
+    return None
+
+def get_global_attachment(reference_shape, body_shape):
+    """
+    Determine which global direction the body lies from
+    the reference category.
+
+    Global convention:
+        X = length
+        Z = width
+        Y = height
+    """
+
+    ref_obb = get_obb(reference_shape)
+    body_obb = get_obb(body_shape)
+
+    ref = ref_obb.Center()
+    body = body_obb.Center()
+
+    dx = body.X() - ref.X()
+    dy = body.Y() - ref.Y()
+    dz = body.Z() - ref.Z()
+
+    values = {
+        "length": dx,
+        "width": dz,
+        "height": dy,
+    }
+
+    logical_dimension = max(
+        values,
+        key=lambda k: abs(values[k])
+    )
+
+    value = values[logical_dimension]
+
+    sign = "+" if value >= 0 else "-"
+
+    return sign, logical_dimension
 
 def process_dimension(
     solids,
@@ -139,46 +191,14 @@ def process_dimension(
 
     attachment_map = []
 
-    reference_obb = get_obb(reference_shape)
-
-    x_axis = reference_obb.XDirection()
-    y_axis = reference_obb.YDirection()
-    z_axis = reference_obb.ZDirection()
-
     for body in all_bodies:
 
         if body["name"] in metadata[reference_category]:
             continue
 
-        vec = vector_between(
-           reference_shape,
+        sign, logical = get_global_attachment(
+            reference_shape,
             body["shape"],
-        )
-
-        px = projection_on_axis(
-            vec,
-            x_axis,
-        )
-
-        py = projection_on_axis(
-            vec,
-            y_axis,
-        )
-
-        pz = projection_on_axis(
-            vec,
-            z_axis,
-        )
-
-        sign, axis = classify_attachment(
-            px,
-            py,
-            pz,
-        )
-
-        logical = get_logical_dimension(
-            compute_obb(body["shape"]),
-            axis,
         )
 
         attachment_map.append(
@@ -187,8 +207,7 @@ def process_dimension(
                 "shape": body["shape"],
                 "attachment": f"{sign}{logical}",
             }
-        )
-
+        )  
     # print("\nAttachment Map")
 
     # for item in attachment_map:
@@ -202,49 +221,37 @@ def process_dimension(
     # ----------------------------------------------------
     # Move attached bodies
     # ----------------------------------------------------
+    # ----------------------------------------------------
+    # Move armrests as complete left/right groups
+    # ----------------------------------------------------
+    if (
+        reference_category == "seat"
+        and logical_dimension == "length"
+    ):
 
-    print("\nMoving Bodies")
+        half_growth = growth["length"] / 2
 
-    for item in attachment_map:
+        for item in attachment_map:
 
-        attachment = item["attachment"]
+            side = get_armrest_side(item["name"])
 
-        sign = attachment[0]
+            if side == "left":
 
-        attachment_dimension = attachment[1:]
+                item["shape"] = move_body(
+                    item["shape"],
+                    gp_Vec(1, 0, 0),
+                    half_growth,
+                )
 
-        # Move only bodies attached to the scaled dimension
-        if attachment_dimension != reference_scale_info["logical_dimension"]:
-            continue
+            elif side == "right":
 
-        overlap = get_overlap(
-            reference_shape,
-            item["shape"],
-            reference_scale_info,
-        )
+                item["shape"] = move_body(
+                    item["shape"],
+                    gp_Vec(1, 0, 0),
+                    -half_growth,
+                ) 
 
-        if sign == "+":
-
-            item["shape"] = move_body(
-                item["shape"],
-                reference_scale_info["direction"],
-                overlap,
-            )
-
-            # print(
-            #     item["name"],
-            #     "moved",
-            #     attachment,
-            # )
-
-        elif sign == "-":
-
-            item["shape"] = move_body(
-                item["shape"],
-                reference_scale_info["direction"],
-                -overlap,
-            )
-
+                
             # print(
             #     item["name"],
             #     "moved",
