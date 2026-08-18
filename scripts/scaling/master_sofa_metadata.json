@@ -1,16 +1,30 @@
+
+
 {
   "seat": [
     "seat_top",
     "seat_front",
-    "cusion"
+    "cusion",
+    "Wood Frame (3)",
+    "Wood Frame (23)",
+    "Wood Frame (4)",
+    "Wood Frame (5)",
+    "Wood Frame (6)",
+    "Wood Frame (7)",
+    "Wood Frame (8)",
+    "Wood Frame (9)",
+    "Wood Frame (10)",
+    "Wood Frame (13)",
+    "Wood Frame (18)",
+    "Wood Frame (20)",
+    "Wood Frame (21)",
+    "Wood Frame (22)"
   ],
-
   "backrest": [
     "backrest_front",
     "backrest_top",
     "backrest_back"
   ],
-
   "armrest": [
     "right_armrest_top",
     "left_armrest_top",

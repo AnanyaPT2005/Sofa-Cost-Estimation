@@ -47,11 +47,9 @@ from position_engine import (
 from export_step import export_step
 
 load_dotenv()
-STEP_FILE = r"G:\My Drive\sofa cost estimation\sofa 3d models\master sofa test hollow.step"
+STEP_FILE = r"G:\My Drive\sofa cost estimation\scripts\scaling\master sofa test hollow ver 2.step"
 OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
 metadata = load_metadata(r"G:\My Drive\sofa cost estimation\scripts\scaling\master_sofa_metadata.json")
-print(type(metadata))
-print(metadata)
 SCALING_RULES = {
     "length": ["seat"],
     "width": ["seat", "armrest"],
@@ -80,38 +78,38 @@ def main():
             obb = compute_obb(solid)
             axis_map = get_body_axis_map(obb)
 
-            print("Axis Mapping:")
-            print(axis_map)
+            # print("Axis Mapping:")
+            # print(axis_map)
 
-            print("OBB Sizes:")
-            print(
-                "X:", 2 * obb.XHSize(),
-                "Y:", 2 * obb.YHSize(),
-                "Z:", 2 * obb.ZHSize()
-            )
+            # print("OBB Sizes:")
+            # print(
+            #     "X:", 2 * obb.XHSize(),
+            #     "Y:", 2 * obb.YHSize(),
+            #     "Z:", 2 * obb.ZHSize()
+            # )
 
-            print(f"\n{body_name}")
+            # print(f"\n{body_name}")
 
-            print(
-                "X:",
-                obb.XDirection().X(),
-                obb.XDirection().Y(),
-                obb.XDirection().Z()
-            )
+            # print(
+            #     "X:",
+            #     obb.XDirection().X(),
+            #     obb.XDirection().Y(),
+            #     obb.XDirection().Z()
+            # )
 
-            print(
-                "Y:",
-                obb.YDirection().X(),
-                obb.YDirection().Y(),
-                obb.YDirection().Z()
-            )
+            # print(
+            #     "Y:",
+            #     obb.YDirection().X(),
+            #     obb.YDirection().Y(),
+            #     obb.YDirection().Z()
+            # )
 
-            print(
-                "Z:",
-                obb.ZDirection().X(),
-                obb.ZDirection().Y(),
-                obb.ZDirection().Z()
-            )
+            # print(
+            #     "Z:",
+            #     obb.ZDirection().X(),
+            #     obb.ZDirection().Y(),
+            #     obb.ZDirection().Z()
+            # )
     assembly_dimensions = get_assembly_dimensions(
         solids,
     )
