@@ -1,281 +1,389 @@
 """
-Main pipeline for STEP processing.
+Main pipeline for exact STEP assembly scaling.
+
+Global convention:
+
+    X -> Length
+    Y -> Width
+    Z -> Height
+
+The complete assembly is scaled together.
 """
+
 from dotenv import load_dotenv
 import os
+
 from body_names import get_step_body_names
 from step_reader import read_step
-from assembly_parser import get_reference_shape
 from body_extractor import extract_solids
-from scaling_pipeline import process_dimension
-from step_reader import load_metadata
-from scale_step import (
-    scale_body,
-    get_logical_dimension,
-)
-from step_reader import (
-    read_step,
-    load_metadata,
-    get_template_frame,
-    get_assembly_dimensions,
-    get_body_dimensions,
-    get_category_dimensions,
-    get_body_axis_map,
-    print_global_length_bounds
-)
+
+from scaling_pipeline import process_assembly
+
 from bbox_engine import (
-    compute_bbox,
-    compute_obb,
-    print_bbox,
-    print_obb,
-)
-
-from scale_step import (
-    scale_body,
-    get_logical_dimension,
-)
-
-from position_engine import (
-    get_overlap,
-    move_body,
-    vector_between,
-    get_obb,
-    projection_on_axis,
-    classify_attachment,
+    compute_assembly_bbox,
+    get_assembly_dimensions,
 )
 
 from export_step import export_step
 
+
+# ---------------------------------------------------------
+# ENVIRONMENT
+# ---------------------------------------------------------
+
 load_dotenv()
-STEP_FILE = r"G:\My Drive\sofa cost estimation\scripts\scaling\master sofa test hollow ver 2.step"
-OUTPUT_STEP = r"G:\My Drive\sofa cost estimation\scripts\scaling\scaled_step.step"
-metadata = load_metadata(r"G:\My Drive\sofa cost estimation\scripts\scaling\master_sofa_metadata.json")
-SCALING_RULES = {
-    "length": ["seat"],
-    "width": ["seat", "armrest"],
-    "height": ["backrest"],
-}
-def main():
 
-    body_names = get_step_body_names(STEP_FILE)
-
-    # print("\nBodies found:")
-
-    # for i, name in enumerate(body_names, start=1):
-    #     print(f"{i}. {name}")
-
-    shape_tool = read_step(STEP_FILE)
-
-    shape = get_reference_shape(shape_tool)
-
-    solids = extract_solids(shape)
-    print("\nSeat Body OBB Axes")
-
-    for solid, body_name in zip(solids, body_names):
-
-        if body_name in metadata["seat"]:
-
-            obb = compute_obb(solid)
-            axis_map = get_body_axis_map(obb)
-
-            # print("Axis Mapping:")
-            # print(axis_map)
-
-            # print("OBB Sizes:")
-            # print(
-            #     "X:", 2 * obb.XHSize(),
-            #     "Y:", 2 * obb.YHSize(),
-            #     "Z:", 2 * obb.ZHSize()
-            # )
-
-            # print(f"\n{body_name}")
-
-            # print(
-            #     "X:",
-            #     obb.XDirection().X(),
-            #     obb.XDirection().Y(),
-            #     obb.XDirection().Z()
-            # )
-
-            # print(
-            #     "Y:",
-            #     obb.YDirection().X(),
-            #     obb.YDirection().Y(),
-            #     obb.YDirection().Z()
-            # )
-
-            # print(
-            #     "Z:",
-            #     obb.ZDirection().X(),
-            #     obb.ZDirection().Y(),
-            #     obb.ZDirection().Z()
-            # )
-    assembly_dimensions = get_assembly_dimensions(
-        solids,
-    )
-
-    print("\nCurrent Assembly Dimensions")
-
-    for k, v in assembly_dimensions.items():
-        print(f"{k}: {v:.2f}")
-    
-
-    # ---------------------------------------
-    # Find seat category
-    # ---------------------------------------
-
-    seat_shape = None
-
-    for solid, body_name in zip(solids, body_names):
-
-        if body_name in metadata["seat"]:
-            seat_shape = solid
-            break
-
-    seat_obb = compute_obb(seat_shape)
-    template_frame = get_template_frame(
-        seat_shape,
-    )
-    for category in metadata:
-
-        dimensions = get_category_dimensions(
-            category,
-            metadata,
-            solids,
-            body_names,
-            template_frame,
-        )
-
-        print(f"\n{category.upper()}")
-
-        for k, v in dimensions.items():
-            print(f"{k}: {v:.2f}")
-
-    seat_body_dimensions = get_body_dimensions(
-        "seat",
-        metadata,
-        solids,
-        body_names,
-    )
-
-    print("\nSeat Body Dimensions")
-
-    for body_name, dimensions in seat_body_dimensions.items():
-
-        print(f"\n{body_name}")
-
-        for dimension, value in dimensions.items():
-            print(f"{dimension}: {value:.2f}")
-    
-    seat_dimensions = get_category_dimensions(
-    "seat",
-    metadata,
-    solids,
-    body_names,
-    template_frame,
+STEP_FILE = os.getenv(
+    "STEP_FILE"
 )
 
-    # ---------------------------------------
-    # User input
-    # ---------------------------------------
+OUTPUT_STEP = os.getenv(
+    "OUTPUT_STEP"
+)
 
-    target_length = float(input("Target Length (mm): "))
-    target_width = float(input("Target Width (mm): "))
-    target_height = float(input("Target Height (mm): "))
+METADATA_FILE = os.getenv(
+    "METADATA_FILE"
+)
 
-    remaining = (
-        target_length
-        - assembly_dimensions["length"]
+
+# ---------------------------------------------------------
+# VALIDATE PATHS
+# ---------------------------------------------------------
+
+def validate_paths():
+
+    print(
+        "\n========== PATH CONFIGURATION =========="
     )
 
-    target_seat_length = (
-        seat_dimensions["length"]
-        + remaining
+    print(
+        "STEP_FILE     :",
+        STEP_FILE,
     )
 
-    length_factor = (
-        target_seat_length
-        / seat_dimensions["length"]
+    print(
+        "OUTPUT_STEP   :",
+        OUTPUT_STEP,
     )
-    width_factor = target_width / seat_dimensions["width"]
-    height_factor = target_height / seat_dimensions["height"]
 
-    print("\nScale Factors")
-    print(f"Length : {length_factor:.3f}")
-    print(f"Width  : {width_factor:.3f}")
-    print(f"Height : {height_factor:.3f}")
+    print(
+        "METADATA_FILE :",
+        METADATA_FILE,
+    )
 
-    processed_solids = solids
+    if not STEP_FILE:
+        raise ValueError(
+            "STEP_FILE is not configured."
+        )
 
-    factors = {
-        "length": length_factor,
-        "width": width_factor,
-        "height": height_factor,
-    }
+    if not OUTPUT_STEP:
+        raise ValueError(
+            "OUTPUT_STEP is not configured."
+        )
 
-    for logical_dimension in [
-        "length",
-        "width",
-        "height",
-    ]:
+    if not METADATA_FILE:
+        raise ValueError(
+            "METADATA_FILE is not configured."
+        )
 
-        for category in SCALING_RULES[logical_dimension]:
-            targets = {
-                "length": target_length,
-                "width": target_width,
-                "height": target_height,
-            }
-            category_dimensions = get_category_dimensions(
-                category,
-                metadata,
-                processed_solids,
-                body_names,
-                template_frame,
-            )
+    if not os.path.exists(
+        STEP_FILE
+    ):
+        raise FileNotFoundError(
+            f"STEP file not found:\n"
+            f"{STEP_FILE}"
+        )
 
-            if logical_dimension == "length" and category == "seat":
-                factor = length_factor
-            else:
-                factor = (
-                    targets[logical_dimension]
-                    /
-                    category_dimensions[logical_dimension]
-                )
-            print_global_length_bounds(
-                processed_solids,
-                body_names,
-            )
-            processed_solids = process_dimension(
-                solids=processed_solids,
-                body_names=body_names,
-                logical_dimension=logical_dimension,
-                factor=factor,
-                reference_category=category,
-                metadata=metadata,
-                target_length=target_length,
-            )
-            print_global_length_bounds(
-                processed_solids,
-                body_names,
-            )
-            
+    if not os.path.exists(
+        METADATA_FILE
+    ):
+        raise FileNotFoundError(
+            f"Metadata file not found:\n"
+            f"{METADATA_FILE}"
+        )
 
-            new_dimensions = get_assembly_dimensions(
-                processed_solids,
-            )
+    print(
+        "All required input paths exist."
+    )
 
-            print("\nAfter Seat Scaling")
-            print(f"Global Length : {new_dimensions['length']:.2f}")
 
-    # ----------------------------------------------------
-    # Export STEP
-    # ----------------------------------------------------
+# ---------------------------------------------------------
+# PRINT DIMENSIONS
+# ---------------------------------------------------------
+
+def print_dimensions(
+    title,
+    dimensions,
+):
+
+    print("\n" + "=" * 60)
+    print(title)
+    print("=" * 60)
+
+    print(
+        f"Length : "
+        f"{dimensions['length']:.6f} mm"
+    )
+
+    print(
+        f"Width  : "
+        f"{dimensions['width']:.6f} mm"
+    )
+
+    print(
+        f"Height : "
+        f"{dimensions['height']:.6f} mm"
+    )
+
+
+# ---------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------
+
+def main():
+
+    validate_paths()
+
+    # -------------------------------------------------
+    # Read STEP
+    # -------------------------------------------------
+
+    body_names = get_step_body_names(
+        STEP_FILE
+    )
+
+    print(
+        "\nSTEP BODY COUNT :",
+        len(body_names)
+    )
+
+    shape = read_step(
+        STEP_FILE
+    )
+
+    solids = extract_solids(
+        shape
+    )
+
+    print(
+        "\nTOTAL SOLIDS FOUND :",
+        len(solids)
+    )
+
+    if len(solids) != len(body_names):
+
+        raise RuntimeError(
+            "Number of STEP body names does not "
+            "match number of extracted solids.\n"
+            f"Body names : {len(body_names)}\n"
+            f"Solids     : {len(solids)}"
+        )
+
+    # -------------------------------------------------
+    # Current dimensions
+    # -------------------------------------------------
+
+    current_dimensions = (
+        get_assembly_dimensions(
+            solids
+        )
+    )
+
+    print_dimensions(
+        "ORIGINAL ASSEMBLY DIMENSIONS",
+        current_dimensions,
+    )
+
+    # -------------------------------------------------
+    # User targets
+    # -------------------------------------------------
+
+    print(
+        "\nEnter target dimensions in millimeters."
+    )
+
+    target_length = float(
+        input(
+            "Target Length (mm): "
+        )
+    )
+
+    target_width = float(
+        input(
+            "Target Width (mm): "
+        )
+    )
+
+    target_height = float(
+        input(
+            "Target Height (mm): "
+        )
+    )
+
+    if target_length <= 0:
+        raise ValueError(
+            "Target length must be > 0."
+        )
+
+    if target_width <= 0:
+        raise ValueError(
+            "Target width must be > 0."
+        )
+
+    if target_height <= 0:
+        raise ValueError(
+            "Target height must be > 0."
+        )
+
+    # -------------------------------------------------
+    # Scale complete assembly
+    # -------------------------------------------------
+
+    processed_solids, factors = (
+        process_assembly(
+            solids=solids,
+            target_length=target_length,
+            target_width=target_width,
+            target_height=target_height,
+        )
+    )
+
+    # -------------------------------------------------
+    # Final dimensions
+    # -------------------------------------------------
+
+    final_dimensions = (
+        get_assembly_dimensions(
+            processed_solids
+        )
+    )
+
+    print_dimensions(
+        "FINAL ASSEMBLY DIMENSIONS",
+        final_dimensions,
+    )
+
+    # -------------------------------------------------
+    # Target
+    # -------------------------------------------------
+
+    print("\n" + "=" * 60)
+    print("TARGET DIMENSIONS")
+    print("=" * 60)
+
+    print(
+        f"Length : "
+        f"{target_length:.6f} mm"
+    )
+
+    print(
+        f"Width  : "
+        f"{target_width:.6f} mm"
+    )
+
+    print(
+        f"Height : "
+        f"{target_height:.6f} mm"
+    )
+
+    # -------------------------------------------------
+    # Errors
+    # -------------------------------------------------
+
+    length_error = (
+        final_dimensions["length"]
+        - target_length
+    )
+
+    width_error = (
+        final_dimensions["width"]
+        - target_width
+    )
+
+    height_error = (
+        final_dimensions["height"]
+        - target_height
+    )
+
+    print("\n" + "=" * 60)
+    print("DIMENSION ERROR")
+    print("=" * 60)
+
+    print(
+        f"Length Error : "
+        f"{length_error:.9f} mm"
+    )
+
+    print(
+        f"Width Error  : "
+        f"{width_error:.9f} mm"
+    )
+
+    print(
+        f"Height Error : "
+        f"{height_error:.9f} mm"
+    )
+
+    # -------------------------------------------------
+    # Verification
+    # -------------------------------------------------
+
+    tolerance = 0.001
+
+    success = (
+        abs(length_error) <= tolerance
+        and
+        abs(width_error) <= tolerance
+        and
+        abs(height_error) <= tolerance
+    )
+
+    print("\n" + "=" * 60)
+
+    if success:
+
+        print(
+            "EXACT DIMENSION TARGET ACHIEVED"
+        )
+
+        print(
+            f"Tolerance : ±{tolerance} mm"
+        )
+
+    else:
+
+        print(
+            "WARNING: FINAL DIMENSIONS "
+            "ARE OUTSIDE TOLERANCE."
+        )
+
+    print("=" * 60)
+
+    # -------------------------------------------------
+    # Export
+    # -------------------------------------------------
+
+    print(
+        "\nExporting scaled STEP..."
+    )
 
     export_step(
         processed_solids,
         OUTPUT_STEP,
     )
 
+    print(
+        "\nSTEP exported successfully!"
+    )
+
+    print(
+        OUTPUT_STEP
+    )
+
+
+# ---------------------------------------------------------
+# ENTRY POINT
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
     main()

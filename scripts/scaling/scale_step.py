@@ -1,201 +1,130 @@
-from OCP.gp import (
-    gp_Ax3,
-    gp_Pnt,
-    gp_Dir,
-    gp_Mat,
-    gp_GTrsf,
-    gp_XYZ,
-    
-)
-from step_reader import get_body_axis_map
-from bbox_engine import compute_obb
-from OCP.BRepBuilderAPI import (
-    BRepBuilderAPI_GTransform,
-   
-)
+"""
+Global STEP assembly scaling.
 
-def get_logical_dimension(obb, obb_axis):
-    """
-    Convert an OBB axis to its logical dimension.
-    """
+The complete assembly is scaled using the global coordinate system:
 
-    mapping = get_body_axis_map(obb)
+    Global X -> Length
+    Global Y -> Width
+    Global Z -> Height
 
-    for logical, axis in mapping.items():
+All bodies are transformed around the SAME assembly center.
+This preserves the relative position of all sofa components.
+"""
 
-        if axis == obb_axis:
-            return logical
-
-    return None
-
-# -------------------------------------------------
-# Build OBB Coordinate System
-# -------------------------------------------------
-
-def build_obb_frame(obb):
-
-    center = obb.Center()
-
-    xdir = obb.XDirection()
-    ydir = obb.YDirection()
-    zdir = obb.ZDirection()
+from OCP.gp import gp_GTrsf, gp_Mat, gp_XYZ
+from OCP.BRepBuilderAPI import BRepBuilderAPI_GTransform
 
 
-    frame = gp_Ax3(
-        gp_Pnt(
-            center.X(),
-            center.Y(),
-            center.Z(),
-        ),
+# ---------------------------------------------------------
+# Build anisotropic global scale matrix
+# ---------------------------------------------------------
 
-        gp_Dir(
-            zdir.X(),
-            zdir.Y(),
-            zdir.Z(),
-        ),
-
-        gp_Dir(
-            xdir.X(),
-            xdir.Y(),
-            xdir.Z(),
-        ),
-    )
-
-
-    return frame
-
-
-
-# -------------------------------------------------
-# Rotation Matrix
-# -------------------------------------------------
-
-def build_rotation_matrix(obb):
-
-    xdir = obb.XDirection()
-    ydir = obb.YDirection()
-    zdir = obb.ZDirection()
-
-
-    R = gp_Mat(
-        xdir.X(), ydir.X(), zdir.X(),
-        xdir.Y(), ydir.Y(), zdir.Y(),
-        xdir.Z(), ydir.Z(), zdir.Z(),
-    )
-
-
-    return R, R.Inverted()
-
-
-
-# -------------------------------------------------
-# Scale Matrix
-# -------------------------------------------------
-
-def build_scale_matrix(
-    logical_axis,
-    factor,
+def build_global_scale_matrix(
+    length_factor,
+    width_factor,
+    height_factor,
 ):
+    """
+    Create a diagonal 3D scaling matrix.
 
-    axis_map = {
+    X -> Length
+    Y -> Width
+    Z -> Height
+    """
 
-        "X": 1,
-        "Y": 2,
-        "Z": 3,
-    }
+    matrix = gp_Mat()
 
+    matrix.SetIdentity()
 
-    S = gp_Mat()
-
-    S.SetIdentity()
-
-
-    axis = axis_map[logical_axis]
-
-
-    S.SetValue(
-        axis,
-        axis,
-        factor,
+    matrix.SetValue(
+        1,
+        1,
+        length_factor,
     )
 
+    matrix.SetValue(
+        2,
+        2,
+        width_factor,
+    )
 
-    return S
+    matrix.SetValue(
+        3,
+        3,
+        height_factor,
+    )
+
+    return matrix
 
 
+# ---------------------------------------------------------
+# Calculate translation so scaling happens around center
+# ---------------------------------------------------------
 
-# -------------------------------------------------
-# Final Matrix
-# -------------------------------------------------
-
-def build_final_matrix(
-    R,
-    R_inv,
-    S,
-):
-
-    RS = R.Multiplied(S)
-
-    FINAL = RS.Multiplied(R_inv)
-
-    return FINAL
-
-# -------------------------------------------------
-# Translation
-# -------------------------------------------------
-
-def compute_translation(
+def compute_centered_translation(
     center,
-    FINAL,
+    matrix,
 ):
+    """
+    Calculate translation required to keep the given
+    center fixed while applying the scale matrix.
+    """
 
     cx = center.X()
     cy = center.Y()
     cz = center.Z()
 
-
-    tx = cx - (
-        FINAL.Value(1,1) * cx +
-        FINAL.Value(1,2) * cy +
-        FINAL.Value(1,3) * cz
+    new_x = (
+        matrix.Value(1, 1) * cx
+        + matrix.Value(1, 2) * cy
+        + matrix.Value(1, 3) * cz
     )
 
-
-    ty = cy - (
-        FINAL.Value(2,1) * cx +
-        FINAL.Value(2,2) * cy +
-        FINAL.Value(2,3) * cz
+    new_y = (
+        matrix.Value(2, 1) * cx
+        + matrix.Value(2, 2) * cy
+        + matrix.Value(2, 3) * cz
     )
 
-
-    tz = cz - (
-        FINAL.Value(3,1) * cx +
-        FINAL.Value(3,2) * cy +
-        FINAL.Value(3,3) * cz
+    new_z = (
+        matrix.Value(3, 1) * cx
+        + matrix.Value(3, 2) * cy
+        + matrix.Value(3, 3) * cz
     )
 
+    tx = cx - new_x
+    ty = cy - new_y
+    tz = cz - new_z
 
     return tx, ty, tz
 
-# -------------------------------------------------
-# Apply Transformation
-# -------------------------------------------------
 
-def apply_transform(
+# ---------------------------------------------------------
+# Apply global transformation
+# ---------------------------------------------------------
+
+def apply_global_transform(
     solid,
-    FINAL,
-    tx,
-    ty,
-    tz,
+    matrix,
+    center,
 ):
+    """
+    Apply the same global transformation to a solid.
+
+    The transformation is performed around the common
+    assembly center.
+    """
+
+    tx, ty, tz = compute_centered_translation(
+        center,
+        matrix,
+    )
 
     gtrsf = gp_GTrsf()
 
-
     gtrsf.SetVectorialPart(
-        FINAL
+        matrix
     )
-
 
     gtrsf.SetTranslationPart(
         gp_XYZ(
@@ -205,110 +134,60 @@ def apply_transform(
         )
     )
 
-
     transformer = BRepBuilderAPI_GTransform(
         solid,
         gtrsf,
         True,
     )
 
+    if not transformer.IsDone():
+        raise RuntimeError(
+            "Global geometric transformation failed."
+        )
 
     return transformer.Shape()
 
 
+# ---------------------------------------------------------
+# Scale complete assembly
+# ---------------------------------------------------------
 
-# -------------------------------------------------
-# Scale Body
-# -------------------------------------------------
-
-def scale_body(
-    solid,
-    obb,
-    body_name,
-    logical_dimension,
-    factor,
+def scale_assembly(
+    solids,
+    center,
+    length_factor,
+    width_factor,
+    height_factor,
 ):
-    axis_map = get_body_axis_map(obb)
-    obb_axis = axis_map[logical_dimension]
+    """
+    Scale the complete assembly using ONE global
+    anisotropic transformation.
 
-    # -----------------------------------------
-    # Correct Fusion 360 orientation first
-    # -----------------------------------------
+    Every body receives exactly the same transformation.
+    """
 
-    build_obb_frame(obb)
-
-
-    # -----------------------------------------
-    # OBB scaling
-    # -----------------------------------------
-    R, R_inv = build_rotation_matrix(
-        obb
+    matrix = build_global_scale_matrix(
+        length_factor,
+        width_factor,
+        height_factor,
     )
 
+    processed_solids = []
 
-    S = build_scale_matrix(
-    obb_axis,
-    factor,
-)
-    FINAL = build_final_matrix(
-        R,
-        R_inv,
-        S,
-    )
-    tx, ty, tz = compute_translation(
-        obb.Center(),
-        FINAL,
-    )
-    scaled = apply_transform(
-        solid,
-        FINAL,
-        tx,
-        ty,
-        tz,
-    )
+    for index, solid in enumerate(solids):
 
+        print(
+            f"Scaling body {index + 1}/{len(solids)}..."
+        )
 
-    direction_map = {
+        scaled = apply_global_transform(
+            solid=solid,
+            matrix=matrix,
+            center=center,
+        )
 
-        "X": obb.XDirection(),
-        "Y": obb.YDirection(),
-        "Z": obb.ZDirection(),
-    }
+        processed_solids.append(
+            scaled
+        )
 
-
-    size_map = {
-
-        "X": 2 * obb.XHSize(),
-        "Y": 2 * obb.YHSize(),
-        "Z": 2 * obb.ZHSize(),
-    }
-
-
-    old_size = size_map[obb_axis]
-
-
-    scale_info = {
-
-    # OBB axis
-    "logical_axis": obb_axis,
-
-    # Unit direction of scaling
-    "direction": direction_map[obb_axis],
-
-    # User-selected logical dimension
-    "logical_dimension": logical_dimension,
-
-    # Sizes
-    "old_size": old_size,
-    "new_size": old_size * factor,
-
-    # Amount added during scaling
-    "growth": (old_size * factor) - old_size,
-
-    # Scale factor
-    "factor": factor,
-
-    # OBB itself (needed later)
-    "obb": obb,
-    }
-    return scaled, scale_info
+    return processed_solids

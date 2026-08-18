@@ -1,4 +1,3 @@
-
 from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
 from OCP.BRepBndLib import BRepBndLib
 from OCP.BRep import BRep_Builder
@@ -236,3 +235,39 @@ def make_compound(shapes):
         builder.Add(compound, shape)
 
     return compound
+
+
+def move_backrest_to_seat_edge(
+    backrest,
+    seat,
+):
+    """
+    Move the backrest so that its positive-X edge
+    stays attached to the negative-X edge of the seat.
+    """
+
+    seat_xmin, _, _, _, _, _ = get_bounds(seat)
+
+    back_xmin, _, _, back_xmax, _, _ = get_bounds(
+        backrest
+    )
+
+    # Backrest is positioned behind the negative-X
+    # edge of the seat.
+    distance = seat_xmin - back_xmax
+
+    return move_body(
+        backrest,
+        gp_Vec(1, 0, 0),
+        distance,
+    )
+def get_armrest_side(body_name):
+    name = body_name.lower().replace(" ", "_")
+
+    if name in ("left_arm", "left_armrest"):
+        return "left"
+
+    if name in ("right_arm", "right_armrest"):
+        return "right"
+
+    return None

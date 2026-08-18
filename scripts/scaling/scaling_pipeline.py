@@ -1,293 +1,192 @@
-#this is scaling_pipeline
+"""
+Assembly scaling pipeline.
+
+The pipeline calculates all three scale factors from the
+ORIGINAL assembly bounding box and applies one global
+transformation to the complete assembly.
+"""
+
 from bbox_engine import (
-    compute_obb,
-    print_bbox,
-)
-from OCP.gp import gp_Vec, gp_Pnt
-from OCP.gp import gp_Vec
-from step_reader import get_category_bounds
-from scale_step import (
-    scale_body,
-    get_logical_dimension,
+    compute_assembly_bbox,
+    get_bbox_dimensions,
 )
 
-from position_engine import (
-    get_overlap,
-    move_body,
-    vector_between,
-    get_obb,
-    projection_on_axis,
-    classify_attachment,
-    make_compound,
-    get_bounds,
-)
+from scale_step import scale_assembly
 
-SCALING_RULES = {
-    "length": [
-        "seat",
-    ],
-    "width": [
-        "seat",
-        "armrest",
-    ],
-    "height": [
-        "backrest",
-    ],
-}
 
-def get_armrest_side(body_name):
-
-    name = body_name.lower().replace(" ", "_")
-
-    if name.startswith("left_armrest"):
-        return "left"
-
-    if name.startswith("right_armrest"):
-        return "right"
-
-    return None
-
-def get_global_attachment(reference_shape, body_shape):
-    """
-    Determine which global direction the body lies from
-    the reference category.
-
-    Global convention:
-        X = length
-        Z = width
-        Y = height
-    """
-
-    ref_obb = get_obb(reference_shape)
-    body_obb = get_obb(body_shape)
-
-    ref = ref_obb.Center()
-    body = body_obb.Center()
-
-    dx = body.X() - ref.X()
-    dy = body.Y() - ref.Y()
-    dz = body.Z() - ref.Z()
-
-    values = {
-        "length": dx,
-        "width": dz,
-        "height": dy,
-    }
-
-    logical_dimension = max(
-        values,
-        key=lambda k: abs(values[k])
-    )
-
-    value = values[logical_dimension]
-
-    sign = "+" if value >= 0 else "-"
-
-    return sign, logical_dimension
-
-def process_dimension(
-    solids,
-    body_names,
-    logical_dimension,
-    factor,
-    metadata,
-    target_length=None,
-    reference_category="seat",
+def calculate_scale_factors(
+    current_dimensions,
+    target_length,
+    target_width,
+    target_height,
 ):
-    old_reference_bounds = get_category_bounds(
-        reference_category,
-        metadata,
-        solids,
-        body_names,
-    )       
-    processed_solids = []
-    scaled_reference_bodies = {}
+    """
+    Calculate independent global scale factors for
+    X, Y and Z.
+    """
 
-    all_bodies = []
+    current_length = current_dimensions["length"]
+    current_width = current_dimensions["width"]
+    current_height = current_dimensions["height"]
 
-    reference_shapes = []
-    reference_shape = None
-    reference_scale_info = None
-
-   
-
-    # ----------------------------------------------------
-    # Process all bodies
-    # ----------------------------------------------------
-
-    for solid, body_name in zip(solids, body_names):
-
-        # print("\n" + "=" * 60)
-        # print(body_name)
-
-        # print_bbox(
-        #     body_name,
-        #     bbox,
-        # )
-
-        obb = compute_obb(solid)
-
-        # print_obb(
-        #     body_name,
-        #     obb,
-        # )
-        # print(f"\n{body_name}")
-        # print("X:", obb.XDirection().X(), obb.XDirection().Y(), obb.XDirection().Z())
-        # print("Y:", obb.YDirection().X(), obb.YDirection().Y(), obb.YDirection().Z())
-        # print("Z:", obb.ZDirection().X(), obb.ZDirection().Y(), obb.ZDirection().Z())
-
-        if body_name in metadata[reference_category]:
-
-            solid, scale_info = scale_body(
-                solid=solid,
-                obb=obb,
-                body_name=reference_category,
-                logical_dimension=logical_dimension,
-                factor=factor,
-            )
-
-            scaled_reference_bodies[body_name] = solid
-
-            reference_shapes.append(solid)
-
-            if reference_scale_info is None:
-                reference_scale_info = scale_info
-
-
-        all_bodies.append(
-            {
-                "name": body_name,
-                "shape": solid,
-            }
+    if current_length <= 0:
+        raise ValueError(
+            "Current assembly length is zero or invalid."
         )
 
-        processed_solids.append(solid)
-    new_reference_bounds = get_category_bounds(
-        reference_category,
-        metadata,
-        processed_solids,
-        body_names,
+    if current_width <= 0:
+        raise ValueError(
+            "Current assembly width is zero or invalid."
+        )
+
+    if current_height <= 0:
+        raise ValueError(
+            "Current assembly height is zero or invalid."
+        )
+
+    length_factor = (
+        target_length / current_length
     )
 
-    # -----------------------------------------
-    # Calculate ACTUAL growth
-    # -----------------------------------------
+    width_factor = (
+        target_width / current_width
+    )
 
-    old_xmin, old_ymin, old_zmin, old_xmax, old_ymax, old_zmax = old_reference_bounds
+    height_factor = (
+        target_height / current_height
+    )
 
-    new_xmin, new_ymin, new_zmin, new_xmax, new_ymax, new_zmax = new_reference_bounds
-
-
-    growth = {
-        "length": (new_xmax - new_xmin) - (old_xmax - old_xmin),
-        "width":  (new_zmax - new_zmin) - (old_zmax - old_zmin),
-        "height": (new_ymax - new_ymin) - (old_ymax - old_ymin),
+    return {
+        "length": length_factor,
+        "width": width_factor,
+        "height": height_factor,
     }
 
-    # print("\nOverlap :", overlap)
-    reference_shape = make_compound(reference_shapes)
 
-    # ----------------------------------------------------
-    # Build attachment map
-    # ----------------------------------------------------
+def process_assembly(
+    solids,
+    target_length,
+    target_width,
+    target_height,
+):
+    """
+    Scale the entire assembly to the requested dimensions.
+    """
 
-    attachment_map = []
+    print("\n")
+    print("=" * 70)
+    print("GLOBAL ASSEMBLY SCALING")
+    print("=" * 70)
 
-    for body in all_bodies:
+    # -------------------------------------------------
+    # ORIGINAL ASSEMBLY BOUNDING BOX
+    # -------------------------------------------------
 
-        if body["name"] in metadata[reference_category]:
-            continue
+    bbox = compute_assembly_bbox(
+        solids
+    )
 
-        sign, logical = get_global_attachment(
-            reference_shape,
-            body["shape"],
-        )
+    xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
 
-        attachment_map.append(
-            {
-                "name": body["name"],
-                "shape": body["shape"],
-                "attachment": f"{sign}{logical}",
-            }
-        )  
-    # print("\nAttachment Map")
+    center = bbox_center_from_bounds(
+        xmin,
+        ymin,
+        zmin,
+        xmax,
+        ymax,
+        zmax,
+    )
 
-    # for item in attachment_map:
+    current_dimensions = get_bbox_dimensions(
+        bbox
+    )
 
-    #     print(
-    #         item["name"],
-    #         "->",
-    #         item["attachment"],
-    #     )
+    print("\nORIGINAL ASSEMBLY")
+    print(
+        f"Length : {current_dimensions['length']:.6f} mm"
+    )
+    print(
+        f"Width  : {current_dimensions['width']:.6f} mm"
+    )
+    print(
+        f"Height : {current_dimensions['height']:.6f} mm"
+    )
 
-    # ----------------------------------------------------
-    # Move attached bodies
-    # ----------------------------------------------------
-    # ----------------------------------------------------
-    # Move armrests as complete left/right groups
-    # ----------------------------------------------------
-    if (
-        reference_category == "seat"
-        and logical_dimension == "length"
-    ):
+    print("\nORIGINAL BOUNDS")
+    print(
+        f"X : {xmin:.6f} -> {xmax:.6f}"
+    )
+    print(
+        f"Y : {ymin:.6f} -> {ymax:.6f}"
+    )
+    print(
+        f"Z : {zmin:.6f} -> {zmax:.6f}"
+    )
 
-        # Target outer bounds for the requested final length
-        target_half_length = target_length / 2
+    print("\nASSEMBLY CENTER")
+    print(
+        f"X : {center.X():.6f}"
+    )
+    print(
+        f"Y : {center.Y():.6f}"
+    )
+    print(
+        f"Z : {center.Z():.6f}"
+    )
 
-        for item in all_bodies:
+    # -------------------------------------------------
+    # SCALE FACTORS
+    # -------------------------------------------------
 
-            side = get_armrest_side(item["name"])
+    factors = calculate_scale_factors(
+        current_dimensions=current_dimensions,
+        target_length=target_length,
+        target_width=target_width,
+        target_height=target_height,
+    )
 
-            if side is None:
-                continue
+    print("\nSCALE FACTORS")
+    print(
+        f"Length / X : {factors['length']:.12f}"
+    )
+    print(
+        f"Width  / Y : {factors['width']:.12f}"
+    )
+    print(
+        f"Height / Z : {factors['height']:.12f}"
+    )
 
-            xmin, ymin, zmin, xmax, ymax, zmax = get_bounds(
-                item["shape"]
-            )
+    # -------------------------------------------------
+    # APPLY ONE GLOBAL TRANSFORMATION
+    # -------------------------------------------------
 
-            if side == "left":
+    processed_solids = scale_assembly(
+        solids=solids,
+        center=center,
+        length_factor=factors["length"],
+        width_factor=factors["width"],
+        height_factor=factors["height"],
+    )
 
-                # Move left armrest so its OUTER edge reaches +target_half_length
-                distance = target_half_length - xmax
+    return processed_solids, factors
 
-                item["shape"] = move_body(
-                    item["shape"],
-                    gp_Vec(1, 0, 0),
-                    distance,
-                )
 
-            elif side == "right":
+def bbox_center_from_bounds(
+    xmin,
+    ymin,
+    zmin,
+    xmax,
+    ymax,
+    zmax,
+):
+    """
+    Create a gp_Pnt at the center of the assembly bbox.
+    """
 
-                # Move right armrest so its OUTER edge reaches -target_half_length
-                distance = -target_half_length - xmin
+    from OCP.gp import gp_Pnt
 
-                item["shape"] = move_body(
-                    item["shape"],
-                    gp_Vec(1, 0, 0),
-                    distance,
-                )   
-            # print(
-            #     item["name"],
-            #     "moved",
-            #     attachment,
-            # )
-
-    # ----------------------------------------------------
-    # Replace moved bodies
-    # ----------------------------------------------------
-
-    for i, body_name in enumerate(body_names):
-
-        if body_name in metadata[reference_category]:
-
-            processed_solids[i] = scaled_reference_bodies[body_name]
-
-        else:
-
-            for item in all_bodies:
-
-                if item["name"] == body_name:
-
-                    processed_solids[i] = item["shape"]
-                    break
-    return processed_solids
+    return gp_Pnt(
+        (xmin + xmax) / 2.0,
+        (ymin + ymax) / 2.0,
+        (zmin + zmax) / 2.0,
+    )
