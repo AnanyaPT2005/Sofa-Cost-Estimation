@@ -1,0 +1,76 @@
+{
+    "detected_object": "sofa",
+    "predicted_type": "3_seater",
+    "image_width": 679,
+    "image_height": 679,
+    "bbox": [
+        28.0,
+        180.0,
+        655.0,
+        502.0
+    ],
+    "mask_path": "outputs/3seatersofa_mask.png",
+    "sofa_confidence": null,
+    "components": [
+        {
+            "component": "backrest",
+            "confidence": 0.9718,
+            "bbox": [
+                102.5,
+                179.86,
+                586.27,
+                338.25
+            ]
+        },
+        {
+            "component": "seat",
+            "confidence": 0.9716,
+            "bbox": [
+                75.28,
+                338.23,
+                603.09,
+                467.66
+            ]
+        },
+        {
+            "component": "leg",
+            "confidence": 0.9253,
+            "bbox": [
+                55.97,
+                469.47,
+                79.62,
+                498.35
+            ]
+        },
+        {
+            "component": "leg",
+            "confidence": 0.9238,
+            "bbox": [
+                605.16,
+                468.68,
+                628.52,
+                497.5
+            ]
+        },
+        {
+            "component": "rightarmrest",
+            "confidence": 0.6996,
+            "bbox": [
+                26.03,
+                282.51,
+                100.92,
+                469.42
+            ]
+        },
+        {
+            "component": "leftarmrest",
+            "confidence": 0.6261,
+            "bbox": [
+                582.85,
+                279.95,
+                652.52,
+                468.23
+            ]
+        }
+    ]
+}

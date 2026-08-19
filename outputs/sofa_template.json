@@ -1,0 +1,28 @@
+{
+    "template_version": 1,
+    "sofa_type": "Single",
+    "seat_count": 1,
+    "seat_configuration": "Jointed",
+    "components": {
+        "seat": {
+            "bbox": {
+                "width_ratio": 0.83,
+                "height_ratio": 0.14,
+                "depth_ratio": 0.44
+            }
+        },
+        "base": {
+            "bbox": {
+                "width_ratio": 0.78,
+                "height_ratio": 0.13
+            }
+        }
+    },
+    "materials": {
+        "fabric": "Fabric",
+        "armrest_frame": "Wood",
+        "backrest_frame": "Wood",
+        "leg_material": "Unknown"
+    },
+    "leg_count": 0
+}
