@@ -1,75 +1,85 @@
 {
     "detected_object": "sofa",
     "predicted_type": "3_seater",
-    "image_width": 679,
-    "image_height": 679,
+    "image_width": 1000,
+    "image_height": 800,
     "bbox": [
-        28.0,
-        180.0,
-        655.0,
-        502.0
+        91.0,
+        309.0,
+        902.0,
+        758.0
     ],
     "mask_path": "outputs/3seatersofa_mask.png",
     "sofa_confidence": null,
     "components": [
         {
             "component": "backrest",
-            "confidence": 0.9718,
+            "confidence": 0.9271,
             "bbox": [
-                102.5,
-                179.86,
-                586.27,
-                338.25
+                201.4,
+                306.31,
+                829.97,
+                545.76
             ]
         },
         {
             "component": "seat",
-            "confidence": 0.9716,
+            "confidence": 0.9237,
             "bbox": [
-                75.28,
-                338.23,
-                603.09,
-                467.66
+                132.14,
+                534.33,
+                844.35,
+                649.11
+            ]
+        },
+        {
+            "component": "base",
+            "confidence": 0.8289,
+            "bbox": [
+                149.43,
+                647.23,
+                844.55,
+                739.75
             ]
         },
         {
             "component": "leg",
-            "confidence": 0.9253,
+            "confidence": 0.9159,
             "bbox": [
-                55.97,
-                469.47,
-                79.62,
-                498.35
+                130.52,
+                729.73,
+                169.59,
+                751.91
             ]
         },
         {
             "component": "leg",
-            "confidence": 0.9238,
+            "confidence": 0.5548,
             "bbox": [
-                605.16,
-                468.68,
-                628.52,
-                497.5
+                481.66,
+                735.46,
+                516.82,
+                754.31
             ]
         },
         {
             "component": "rightarmrest",
-            "confidence": 0.6996,
+            "confidence": 0.7088,
             "bbox": [
-                26.03,
-                282.51,
-                100.92,
-                469.42
+                90.52,
+                457.13,
+                238.53,
+                733.82
             ]
         },
         {
             "component": "leftarmrest",
-            "confidence": 0.6261,
+            "confidence": 0.5931,
             "bbox": [
-                582.85,
-                279.95,
-                652.52,
-                468.23
+                770.34,
+                454.62,
+                903.63,
+                733.57
             ]
         }
     ]

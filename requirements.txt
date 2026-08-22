@@ -1,0 +1,4 @@
+ultralytics
+opencv-python
+numpy
+//  first run pip install -r requirements.txt then python src\detect_components.py
